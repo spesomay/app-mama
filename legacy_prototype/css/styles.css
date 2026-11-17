@@ -1,0 +1,742 @@
+:root {
+--rosa-fondo: #fff5f7;
+--rosa-principal: #ff4d6d;
+--rosa-hover: #e63956;
+--rosa-suave: #ffe6eb;
+--rosa-borde: #ffccd5;
+--blanco-card: #ffffff;
+--texto-oscuro: #2b2d42;
+--texto-gris: #6c757d;
+--gris-claro-bg: #f8f9fa;
+--verde-whatsapp: #25d366;
+--sombra-suave: 0 4px 15px rgba(255, 77, 109, 0.08);
+}
+
+[data-theme="dark"] {
+--rosa-fondo: #121212;
+--blanco-card: #1e1e1e;
+--rosa-suave: #2d1a20;
+--rosa-borde: #4a242c;
+--texto-oscuro: #f8f9fa;
+--texto-gris: #adb5bd;
+--gris-claro-bg: #2a2a2a;
+--sombra-suave: 0 4px 15px rgba(0, 0, 0, 0.3);
+}
+
+/* ==========================================================================
+2. ESTILOS BASE & ESTRUCTURA
+========================================================================== */
+
+*{
+box-sizing: border-box;
+margin: 0;
+padding: 0;
+font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
+}
+
+body {
+background-color: var(--rosa-fondo);
+color: var(--texto-oscuro);
+min-height: 100vh;
+}
+
+img {
+max-width: 100%;
+}
+
+.contenedor {
+max-width: 1140px;
+margin: 0 auto;
+padding: 0 1.25rem;
+}
+
+.contenedor-reducido {
+max-width: 680px;
+margin: 0 auto;
+}
+
+.seccion-oculta {
+display: none !important;
+}
+
+.seccion-activa {
+display: block;
+animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+from { opacity: 0; transform: translateY(6px); }
+to { opacity: 1; transform: translateY(0); }
+}
+
+/* ==========================================================================
+3. ENCABEZADO & NAVEGACIÓN
+========================================================================== */
+.encabezado-principal {
+background-color: var(--blanco-card);
+border-bottom: 1px solid var(--rosa-borde);
+position: sticky;
+top: 0;
+z-index: 50;
+box-shadow: var(--sombra-suave);
+}
+
+.contenido-encabezado {
+display: flex;
+justify-content: space-between;
+align-items: center;
+padding: 0.85rem 0;
+}
+
+.logotipo {
+display: flex;
+align-items: center;
+gap: 0.75rem;
+}
+
+.icono-logo {
+width: 68px;
+height: 42px;
+display: flex;
+align-items: center;
+justify-content: center;
+}
+
+.titulo-empresa {
+font-family: Georgia, 'Times New Roman', serif;
+font-size: 1.35rem;
+font-weight: 700;
+color: var(--texto-oscuro);
+line-height: 1.1;
+}
+
+.subtitulo-empresa {
+font-size: 0.75rem;
+color: var(--rosa-principal);
+font-weight: 600;
+}
+
+.acciones-encabezado {
+display: flex;
+align-items: center;
+gap: 0.75rem;
+}
+
+.boton-icono {
+background: none;
+border: none;
+color: var(--texto-oscuro);
+padding: 0.5rem;
+cursor: pointer;
+border-radius: 50%;
+}
+
+.boton-pedido {
+background-color: var(--rosa-principal);
+color: white;
+border: none;
+padding: 0.6rem 1.2rem;
+border-radius: 50px;
+font-weight: 700;
+font-size: 0.85rem;
+display: flex;
+align-items: center;
+gap: 0.5rem;
+cursor: pointer;
+box-shadow: 0 4px 10px rgba(255, 77, 109, 0.25);
+}
+
+.contador-pedido {
+background-color: white;
+color: var(--rosa-principal);
+width: 20px;
+height: 20px;
+border-radius: 50%;
+font-size: 0.75rem;
+display: flex;
+align-items: center;
+justify-content: center;
+}
+
+.barra-navegacion {
+background-color: var(--blanco-card);
+border-bottom: 1px solid var(--rosa-borde);
+margin-bottom: 1.5rem;
+overflow-x: auto;
+}
+
+.pestañas-navegacion {
+display: flex;
+justify-content: center;
+gap: 2rem;
+}
+
+.pestana {
+background: none;
+border: none;
+border-bottom: 3px solid transparent;
+padding: 0.85rem 0.5rem;
+font-size: 0.9rem;
+font-weight: 700;
+color: var(--texto-gris);
+cursor: pointer;
+display: flex;
+align-items: center;
+gap: 0.5rem;
+white-space: nowrap;
+}
+
+.pestana.activa {
+color: var(--rosa-principal);
+border-bottom-color: var(--rosa-principal);
+}
+
+/* ==========================================================================
+4. COMPONENTES GENERALES Y BANNERS
+========================================================================== */
+.banner-bienvenida {
+background-color: var(--blanco-card);
+border: 1px solid var(--rosa-borde);
+border-radius: 20px;
+padding: 1.5rem;
+margin-bottom: 1.5rem;
+box-shadow: var(--sombra-suave);
+}
+
+.banner-bienvenida h2 {
+font-family: Georgia, serif;
+font-size: 1.6rem;
+color: var(--texto-oscuro);
+margin-bottom: 0.25rem;
+}
+
+.banner-bienvenida p {
+color: var(--texto-gris);
+font-size: 0.9rem;
+}
+
+.tarjeta-paso, .tarjeta-paso-independiente {
+background-color: var(--blanco-card);
+border: 1px solid var(--rosa-borde);
+border-radius: 20px;
+padding: 1.25rem;
+margin-bottom: 1.25rem;
+box-shadow: var(--sombra-suave);
+}
+
+.encabezado-paso {
+display: flex;
+align-items: center;
+gap: 0.6rem;
+margin-bottom: 1rem;
+}
+
+.espacio-entre {
+justify-content: space-between;
+}
+
+.titulo-con-numero {
+display: flex;
+align-items: center;
+gap: 0.6rem;
+}
+
+.numero-paso {
+background-color: var(--rosa-suave);
+color: var(--rosa-principal);
+width: 24px;
+height: 24px;
+border-radius: 50%;
+font-size: 0.8rem;
+font-weight: 800;
+display: flex;
+align-items: center;
+justify-content: center;
+}
+
+.encabezado-paso h3 {
+font-size: 0.95rem;
+font-weight: 700;
+color: var(--texto-oscuro);
+}
+
+/* ==========================================================================
+5. DISEÑADOR DE TORTAS & TARTAS
+========================================================================== */
+.diseno-grid-torta {
+display: grid;
+grid-template-columns: 1fr;
+gap: 1.5rem;
+}
+
+@media (min-width: 900px) {
+.diseno-grid-torta {
+grid-template-columns: 1fr 380px;
+}
+}
+
+.columna-pasos {
+display: flex;
+flex-direction: column;
+}
+
+.grilla-opciones {
+display: grid;
+grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+gap: 0.75rem;
+}
+
+.tarjeta-opcion {
+background-color: var(--blanco-card);
+border: 1px solid var(--rosa-borde);
+border-radius: 14px;
+padding: 0.85rem;
+cursor: pointer;
+text-align: left;
+}
+
+.tarjeta-opcion:hover {
+border-color: var(--rosa-principal);
+}
+
+.tarjeta-opcion.seleccionada {
+border-color: var(--rosa-principal);
+background-color: var(--rosa-suave);
+}
+
+.nombre-opcion {
+font-size: 0.85rem;
+font-weight: 700;
+color: var(--texto-oscuro);
+display: block;
+}
+
+.precio-opcion {
+font-size: 0.8rem;
+color: var(--rosa-principal);
+font-weight: 800;
+margin-top: 0.2rem;
+display: block;
+}
+
+/* PREVISUALIZACIÓN FLOTANTE (PANEL DERECHO) */
+.tarjeta-resumen-fija {
+background-color: var(--blanco-card);
+border: 1px solid var(--rosa-borde);
+border-radius: 20px;
+padding: 1.25rem;
+position: sticky;
+top: 90px;
+box-shadow: var(--sombra-suave);
+}
+
+.encabezado-resumen {
+display: flex;
+justify-content: space-between;
+align-items: center;
+margin-bottom: 1rem;
+}
+
+.titulo-resumen {
+font-family: Georgia, serif;
+font-size: 1.15rem;
+}
+
+.badge-etiqueta {
+background-color: var(--rosa-suave);
+color: var(--rosa-principal);
+font-size: 0.7rem;
+font-weight: 700;
+padding: 0.2rem 0.6rem;
+border-radius: 50px;
+}
+
+.caja-ilustracion-torta {
+background-color: var(--rosa-fondo);
+border-radius: 16px;
+height: 180px;
+display: flex;
+align-items: center;
+justify-content: center;
+margin-bottom: 1.25rem;
+}
+
+.grafico-torta {
+text-align: center;
+width: 150px;
+}
+
+.cobertura-top {
+background-color: var(--rosa-principal);
+height: 30px;
+border-radius: 12px 12px 0 0;
+display: flex;
+align-items: center;
+justify-content: center;
+}
+
+.corazon-adorno {
+color: white;
+font-size: 0.8rem;
+}
+
+.bizcochuelo-cuerpo {
+background-color: #fef08a;
+color: #854d0e;
+font-size: 0.75rem;
+font-weight: 700;
+padding: 1.2rem 0;
+border-left: 4px solid var(--rosa-principal);
+border-right: 4px solid var(--rosa-principal);
+}
+
+.plato-base {
+height: 8px;
+background-color: #cbd5e1;
+border-radius: 50px;
+}
+
+.resumen-lista-detalles {
+display: flex;
+flex-direction: column;
+gap: 0.6rem;
+font-size: 0.85rem;
+margin-bottom: 1.25rem;
+}
+
+.fila-detalle {
+display: flex;
+justify-content: space-between;
+}
+
+.fila-detalle.columna {
+flex-direction: column;
+gap: 0.2rem;
+}
+
+.label-det {
+color: var(--texto-gris);
+}
+
+.val-det {
+font-weight: 700;
+color: var(--texto-oscuro);
+}
+
+.val-det.destacado {
+color: var(--rosa-principal);
+}
+
+.bloque-total-est {
+border-top: 1px solid var(--rosa-borde);
+padding-top: 0.85rem;
+display: flex;
+justify-content: space-between;
+align-items: center;
+}
+
+.label-total {
+font-weight: 700;
+color: var(--texto-gris);
+}
+
+.monto-total {
+font-size: 1.4rem;
+font-weight: 800;
+color: #e63946;
+}
+
+/* FORMULARIOS & CONTROLES */
+.etiqueta-campo {
+display: block;
+font-size: 0.85rem;
+font-weight: 700;
+margin-bottom: 0.4rem;
+}
+
+.campo-grupo label {
+font-size: 0.85rem;
+font-weight: 600;
+color: var(--texto-oscuro);
+margin-bottom: 0.4rem;
+display: block;
+}
+
+.campo-texto {
+width: 100%;
+padding: 0.75rem 1rem;
+border: 1.5px solid var(--rosa-borde);
+background-color: var(--rosa-fondo);
+border-radius: 12px;
+font-size: 0.9rem;
+color: var(--texto-oscuro);
+outline: none;
+}
+
+.campo-texto:focus {
+border-color: var(--rosa-principal);
+background-color: var(--blanco-card);
+box-shadow: 0 0 0 4px rgba(255, 77, 109, 0.15);
+}
+
+.formulario-datos-cliente {
+display: flex;
+flex-direction: column;
+gap: 0.75rem;
+}
+
+.columnas-2 {
+display: grid;
+grid-template-columns: 1fr 1fr;
+gap: 0.75rem;
+}
+
+.boton-confirmar {
+width: 100%;
+padding: 0.85rem;
+border: none;
+border-radius: 14px;
+font-size: 0.9rem;
+font-weight: 700;
+color: white;
+cursor: pointer;
+display: flex;
+align-items: center;
+justify-content: center;
+gap: 0.5rem;
+margin-top: 1rem;
+background-color: var(--rosa-principal);
+}
+
+.boton-confirmar:hover {
+background-color: var(--rosa-hover);
+}
+
+.boton-whatsapp {
+width: 100%;
+margin-top: 1.25rem;
+padding: 0.9rem 1.5rem;
+background: linear-gradient(135deg, #25D366 0%, #1EBE57 100%);
+color: #ffffff;
+border: none;
+border-radius: 14px;
+font-size: 1rem;
+font-weight: 700;
+display: flex;
+align-items: center;
+justify-content: center;
+gap: 0.6rem;
+cursor: pointer;
+box-shadow: 0 6px 18px rgba(37, 211, 102, 0.35);
+}
+
+.boton-whatsapp:hover {
+background: linear-gradient(135deg, #22c35e 0%, #1aab4e 100%);
+transform: translateY(-2px);
+box-shadow: 0 8px 22px rgba(37, 211, 102, 0.45);
+}
+
+.boton-whatsapp:active {
+transform: translateY(0);
+}
+
+/* ==========================================================================
+6. SECCIÓN ARMÁ TU DESAYUNO (STOCK)
+========================================================================== */
+.filtros-categoria {
+display: flex;
+justify-content: center;
+gap: 0.5rem;
+margin-bottom: 1.5rem;
+}
+
+.boton-filtro {
+padding: 0.5rem 1.25rem;
+border-radius: 50px;
+border: 1px solid var(--rosa-borde);
+background-color: var(--blanco-card);
+color: var(--texto-gris);
+font-weight: 700;
+font-size: 0.8rem;
+cursor: pointer;
+}
+
+.boton-filtro.activo {
+background-color: var(--rosa-principal);
+color: white;
+border-color: var(--rosa-principal);
+}
+
+.grilla-productos-stock {
+display: grid;
+grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+gap: 1rem;
+}
+
+.card-item-stock {
+background-color: var(--blanco-card);
+border: 1px solid var(--rosa-borde);
+border-radius: 16px;
+padding: 1rem;
+display: flex;
+align-items: center;
+justify-content: space-between;
+}
+
+.controles-item {
+display: flex;
+align-items: center;
+gap: 0.5rem;
+}
+
+.btn-sumar-restar {
+width: 28px;
+height: 28px;
+border-radius: 8px;
+border: 1px solid var(--rosa-borde);
+background-color: var(--rosa-fondo);
+font-weight: bold;
+cursor: pointer;
+color: var(--rosa-principal);
+}
+
+/* ==========================================================================
+7. GALERÍA Y PREGUNTAS FRECUENTES
+========================================================================== */
+.grilla-galeria {
+display: grid;
+grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+gap: 1.25rem;
+}
+
+.tarjeta-galeria {
+background-color: var(--blanco-card);
+border: 1px solid var(--rosa-borde);
+border-radius: 18px;
+padding: 1rem;
+box-shadow: var(--sombra-suave);
+text-align: center;
+}
+
+.placeholder-foto {
+background-color: var(--rosa-fondo);
+height: 160px;
+border-radius: 12px;
+display: flex;
+align-items: center;
+justify-content: center;
+font-size: 3.5rem;
+margin-bottom: 0.85rem;
+}
+
+.tarjeta-galeria h4 {
+font-family: Georgia, serif;
+font-size: 1.05rem;
+color: var(--texto-oscuro);
+margin-bottom: 0.25rem;
+}
+
+.tarjeta-galeria p {
+font-size: 0.8rem;
+color: var(--texto-gris);
+}
+
+.lista-faq .tarjeta-paso h3 {
+font-size: 0.95rem;
+font-weight: 700;
+color: var(--rosa-principal);
+margin-bottom: 0.4rem;
+}
+
+.lista-faq .tarjeta-paso p {
+font-size: 0.85rem;
+color: var(--texto-gris);
+line-height: 1.4;
+}
+
+/* ==========================================================================
+8. CARRITO Y RESUMEN (VISTA 2 COLUMNAS)
+========================================================================== */
+.grilla-resumen-carrito {
+display: grid;
+grid-template-columns: 1fr;
+gap: 1.5rem;
+align-items: start;
+}
+
+@media (min-width: 768px) {
+.grilla-resumen-carrito {
+grid-template-columns: 1fr 1fr;
+}
+}
+
+.contenedor-items-carrito {
+display: flex;
+flex-direction: column;
+}
+
+.item-carrito-fila {
+padding: 1rem 0;
+border-bottom: 1px dashed var(--rosa-borde);
+}
+
+.item-carrito-titulo-row {
+display: flex;
+align-items: center;
+justify-content: space-between;
+}
+
+.item-carrito-tipo {
+font-size: 1rem;
+font-weight: 800;
+color: var(--texto-oscuro);
+}
+
+.btn-eliminar-item {
+background: none;
+border: none;
+color: var(--texto-gris);
+cursor: pointer;
+padding: 0.2rem;
+display: flex;
+align-items: center;
+}
+
+.btn-eliminar-item:hover {
+color: var(--rosa-principal);
+}
+
+.item-carrito-detalle {
+font-size: 0.85rem;
+color: var(--texto-gris);
+margin: 0.35rem 0;
+line-height: 1.35;
+}
+
+.item-carrito-precio {
+font-size: 0.95rem;
+font-weight: 800;
+color: #e63946;
+margin-top: 0.25rem;
+}
+
+.linea-total-compra {
+display: flex;
+justify-content: space-between;
+align-items: center;
+padding: 1.25rem 0 0.5rem 0;
+font-size: 1.15rem;
+font-weight: 800;
+color: var(--texto-oscuro);
+border-top: 2px solid var(--rosa-borde);
+margin-top: 1rem;
+}
+
+.subtitulo-form {
+font-family: Georgia, serif;
+font-size: 1.1rem;
+font-weight: bold;
+color: var(--texto-oscuro);
+margin-bottom: 1rem;
+}

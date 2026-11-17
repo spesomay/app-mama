@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>HechoByGaby - Pastelería Artesanal</title>
+
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <!-- Estilos CSS Vanilla -->
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+
+  <!-- ENCABEZADO PRINCIPAL -->
+  <header class="encabezado-principal">
+    <div class="contenedor contenido-encabezado">
+      <div class="logotipo">
+        <div class="icono-logo">
+            <img src="img/Logo.png" >
+        </div>
+
+        
+        <div class="texto-logo">
+          <h1 class="titulo-empresa">HechoByGaby</h1>
+          <span class="subtitulo-empresa">Pastelería Artesanal</span>
+        </div>
+      </div>
+
+      <div class="acciones-encabezado">
+        <button id="themeToggle" class="boton-icono" title="Cambiar tema">
+          <i data-lucide="moon" id="themeIcon"></i>
+        </button>
+        <button onclick="switchTab('carrito')" class="boton-pedido">
+          <i data-lucide="shopping-basket"></i>
+          <span>Mi Pedido</span>
+          <span id="cartCount" class="contador-pedido">0</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- NAVEGACIÓN POR PESTAÑAS -->
+  <nav class="barra-navegacion">
+    <div class="contenedor pestañas-navegacion">
+      <button id="tabTorta" onclick="switchTab('torta')" class="pestana activa">
+        <i data-lucide="cake"></i>
+        <span>Tortas A Medida</span>
+      </button>
+      <button id="tabTartas" onclick="switchTab('tartas')" class="pestana">
+        <i data-lucide="pie-chart"></i>
+        <span>Tartas & Clásicos</span>
+      </button>
+      <button id="tabDesayuno" onclick="switchTab('desayuno')" class="pestana">
+        <i data-lucide="coffee"></i>
+        <span>Armá tu Desayuno</span>
+      </button>
+      <button id="tabGaleria" onclick="switchTab('galeria')" class="pestana">
+        <i data-lucide="image"></i>
+        <span>Galería</span>
+      </button>
+      <button id="tabFaq" onclick="switchTab('faq')" class="pestana">
+        <i data-lucide="help-circle"></i>
+        <span>Preguntas Frecuentes</span>
+      </button>
+      <button id="tabCarrito" onclick="switchTab('carrito')" class="pestana">
+        <i data-lucide="clipboard-list"></i>
+        <span>Ver Resumen</span>
+      </button>
+    </div>
+  </nav>
+
+  <!-- CONTENIDO PRINCIPAL -->
+  <main class="contenedor contenido-app">
+
+    <!-- SECCIÓN 1: DISEÑADOR DE TORTAS A MEDIDA -->
+    <section id="secTorta" class="seccion-activa">
+      <!-- Banner Saludo -->
+      <div class="banner-bienvenida">
+        <h2>Diseñá tu Torta Soñada 🎂</h2>
+        <p>Elegí el estilo, tamaño, bizcochuelo y hasta 3 rellenos favoritos.</p>
+      </div>
+
+      <div class="diseno-grid-torta">
+        
+        <!-- Columna Izquierda: Bloques de Pasos Separados -->
+        <div class="columna-pasos">
+          
+          <!-- Bloque Paso 1 -->
+          <div class="tarjeta-paso-independiente">
+            <div class="encabezado-paso">
+              <span class="numero-paso">1</span>
+              <h3>Elegí el Estilo / Cobertura:</h3>
+            </div>
+            <div class="grilla-opciones" id="coberturaOptions"></div>
+          </div>
+
+          <!-- Bloque Paso 2 -->
+          <div class="tarjeta-paso-independiente">
+            <div class="encabezado-paso">
+              <span class="numero-paso">2</span>
+              <h3>Tamaño (Porciones):</h3>
+            </div>
+            <div class="grilla-opciones" id="tamanoOptions"></div>
+          </div>
+
+          <!-- Bloque Paso 3 -->
+          <div class="tarjeta-paso-independiente">
+            <div class="encabezado-paso">
+              <span class="numero-paso">3</span>
+              <h3>Sabor del Bizcochuelo:</h3>
+            </div>
+            <div class="grilla-opciones" id="bizcochueloOptions"></div>
+          </div>
+
+          <!-- Bloque Paso 4 -->
+          <div class="tarjeta-paso-independiente">
+            <div class="encabezado-paso espacio-entre">
+              <div class="titulo-con-numero">
+                <span class="numero-paso">4</span>
+                <h3>Rellenos Favoritos:</h3>
+              </div>
+              <span id="rellenosCount" class="etiqueta-contador">0/3 seleccionados</span>
+            </div>
+            <div class="grilla-opciones" id="rellenosOptions"></div>
+          </div>
+
+          <!-- Bloque Notas y Botón -->
+          <div class="tarjeta-paso-independiente">
+            <label class="etiqueta-campo">Detalles o mensaje en la torta (opcional):</label>
+            <input type="text" id="tortaNotas" placeholder="Ej: '¡Feliz Cumpa Sofía!' o sin frutos secos" class="campo-texto">
+            
+            <button onclick="agregarTortaAlCarrito()" class="boton-confirmar">
+              <i data-lucide="plus-circle"></i>
+              <span>Agregar Torta al Pedido</span>
+            </button>
+          </div>
+
+        </div>
+
+        <!-- Columna Derecha: Tarjeta Separada de Vista Previa -->
+        <div class="columna-previsualizacion">
+          <div class="tarjeta-resumen-fija">
+            <div class="encabezado-resumen">
+              <h3 class="titulo-resumen">Vista Previa del Pedido</h3>
+              <span class="badge-etiqueta">Personalizada</span>
+            </div>
+
+            <div class="caja-ilustracion-torta">
+              <div class="grafico-torta">
+                <div id="visualTop" class="cobertura-top">
+                  <div class="corazon-adorno">♥</div>
+                </div>
+                <div id="visualCuerpo" class="bizcochuelo-cuerpo">Bizcochuelo</div>
+                <div class="plato-base"></div>
+              </div>
+            </div>
+
+            <div class="resumen-lista-detalles">
+              <div class="fila-detalle">
+                <span class="label-det">Estilo:</span>
+                <span id="txtEstilo" class="val-det">Drip Cake</span>
+              </div>
+              <div class="fila-detalle">
+                <span class="label-det">Tamaño:</span>
+                <span id="txtTamano" class="val-det">Chica (8 - 10 porciones)</span>
+              </div>
+              <div class="fila-detalle">
+                <span class="label-det">Bizcochuelo:</span>
+                <span id="txtBizcochuelo" class="val-det">Vainilla Tradicional</span>
+              </div>
+              <div class="fila-detalle columna">
+                <span class="label-det">Rellenos seleccionados:</span>
+                <span id="txtRellenos" class="val-det destacado">Dulce de Leche Clásico</span>
+              </div>
+            </div>
+
+            <div class="bloque-total-est">
+              <span class="label-total">Total Estimado:</span>
+              <span id="tortaPrecioTotal" class="monto-total">$12.000</span>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- SECCIÓN 2: TARTAS TRADICIONALES -->
+    <section id="secTartas" class="seccion-oculta">
+      <div class="banner-bienvenida">
+        <h2>Personalizá tu Tarta Tradicional 🥧</h2>
+        <p>Elegí tu sabor favorito, el relleno/crema y el tamaño ideal.</p>
+      </div>
+
+      <div class="diseno-grid-torta">
+        <div class="columna-pasos">
+          <div class="tarjeta-paso">
+            <div class="encabezado-paso">
+              <span class="numero-paso">1</span>
+              <h3>Elegí el Sabor de la Tarta:</h3>
+            </div>
+            <div class="grilla-opciones" id="tartaSaborOptions"></div>
+          </div>
+
+          <div class="tarjeta-paso">
+            <div class="encabezado-paso">
+              <span class="numero-paso">2</span>
+              <h3>Tamaño (Porciones):</h3>
+            </div>
+            <div class="grilla-opciones" id="tartaTamanoOptions"></div>
+          </div>
+
+          <div class="tarjeta-paso">
+            <div class="encabezado-paso">
+              <span class="numero-paso">3</span>
+              <h3>Tipo de Crema / Relleno Base:</h3>
+            </div>
+            <div class="grilla-opciones" id="tartaCremaOptions"></div>
+          </div>
+
+          <div class="tarjeta-paso">
+            <label class="etiqueta-campo">Aclaraciones o detalles adicionales (opcional):</label>
+            <input type="text" id="tartaNotas" placeholder="Ej: Sin merengue muy quemado" class="campo-texto">
+            
+            <button onclick="agregarTartaTradicionalAlCarrito()" class="boton-confirmar">
+              <i data-lucide="plus-circle"></i>
+              <span>Agregar Tarta al Pedido</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="columna-previsualizacion">
+          <div class="tarjeta-resumen-fija">
+            <div class="encabezado-resumen">
+              <h3 class="titulo-resumen">Vista Previa</h3>
+              <span class="badge-etiqueta">Tarta Clásica</span>
+            </div>
+
+            <div class="caja-ilustracion-torta">
+              <div class="grafico-torta">
+                <div id="visualEmojiTarta" style="font-size: 3.5rem; text-align: center; margin-bottom: 0.5rem;">🍓</div>
+                <div id="visualNombreTarta" style="font-weight: bold; font-size: 0.85rem; color: var(--texto-oscuro); text-align: center;">Tarta de Frutillas</div>
+                <div class="plato-base" style="margin-top: 0.8rem;"></div>
+              </div>
+            </div>
+
+            <div class="resumen-lista-detalles">
+              <div class="fila-detalle">
+                <span class="label-det">Sabor:</span>
+                <span id="txtTartaSabor" class="val-det destacado">Tarta de Frutillas</span>
+              </div>
+              <div class="fila-detalle">
+                <span class="label-det">Relleno / Crema:</span>
+                <span id="txtTartaCrema" class="val-det">Crema Chantilly</span>
+              </div>
+              <div class="fila-detalle">
+                <span class="label-det">Tamaño:</span>
+                <span id="txtTartaTamano" class="val-det">Chica (6 - 8 porciones)</span>
+              </div>
+            </div>
+
+            <div class="bloque-total-est">
+              <span class="label-total">Total Estimado:</span>
+              <span class="monto-total">$8.500</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SECCIÓN 3: ARMÁ TU DESAYUNO -->
+    <section id="secDesayuno" class="seccion-oculta">
+      <div class="banner-bienvenida">
+        <h2>Armá tu Caja de Desayuno ☕</h2>
+        <p>Elegí entre nuestras opciones frescas en stock para regalar o disfrutar.</p>
+      </div>
+
+      <div class="filtros-categoria" id="categoriaFiltros">
+        <button onclick="filtrarProductos('todos')" class="boton-filtro activo">Todos</button>
+        <button onclick="filtrarProductos('dulce')" class="boton-filtro">Dulces</button>
+        <button onclick="filtrarProductos('salado')" class="boton-filtro">Salados</button>
+        <button onclick="filtrarProductos('bebida')" class="boton-filtro">Bebidas</button>
+      </div>
+
+      <div class="grilla-productos-stock" id="gridProductosDesayuno"></div>
+    </section>
+
+    <!-- SECCIÓN 4: GALERÍA DE TRABAJOS -->
+    <section id="secGaleria" class="seccion-oculta">
+      <div class="banner-bienvenida">
+        <h2>Nuestros Trabajos 📸</h2>
+        <p>Mirá algunas de las creaciones que preparamos con mucho amor para nuestros clientes.</p>
+      </div>
+
+      <div class="grilla-galeria">
+        <div class="tarjeta-galeria">
+          <div class="placeholder-foto">🎂</div>
+          <h4>Torta Drip de Chocolate</h4>
+          <p>Bizcochuelo húmedo de chocolate con doble relleno de Dulce de Leche.</p>
+        </div>
+        <div class="tarjeta-galeria">
+          <div class="placeholder-foto">🍋</div>
+          <h4>Lemon Pie Artesanal</h4>
+          <p>Masa sablée crocante, relleno suave de limón y merengue italiano.</p>
+        </div>
+        <div class="tarjeta-galeria">
+          <div class="placeholder-foto">🍓</div>
+          <h4>Tarta de Frutillas</h4>
+          <p>Crema pastelera suave con abundante frutilla fresca y gelificación brillante.</p>
+        </div>
+        <div class="tarjeta-galeria">
+          <div class="placeholder-foto">🎁</div>
+          <h4>Caja de Desayuno Especial</h4>
+          <p>Sándwiches de miga, muffins caseros, medialunas y jugo natural.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- SECCIÓN 5: PREGUNTAS FRECUENTES -->
+    <section id="secFaq" class="seccion-oculta contenedor-reducido">
+      <div class="banner-bienvenida">
+        <h2>Información & Preguntas Frecuentes ❓</h2>
+        <p>Todo lo que necesitás saber para hacer tu pedido de manera rápida y fácil.</p>
+      </div>
+
+      <div class="lista-faq">
+        <div class="tarjeta-paso">
+          <h3>🕒 ¿Con cuánta anticipación debo realizar mi pedido?</h3>
+          <p>Para tortas personalizadas recomendamos pedir con <strong>48 a 72 horas</strong> de anticipación. Para tartas clásicas y desayunos, sujetas a disponibilidad del día.</p>
+        </div>
+        <div class="tarjeta-paso">
+          <h3>🚚 ¿Realizan envíos a domicilio?</h3>
+          <p>Sí, realizamos envíos en la zona con costo adicional según la ubicación, o podés retirar sin costo por nuestro taller.</p>
+        </div>
+        <div class="tarjeta-paso">
+          <h3>💳 ¿Cuáles son los medios de pago?</h3>
+          <p>Aceptamos transferencias bancarias, Mercado Pago y efectivo al momento del retiro o entrega.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- SECCIÓN 6: RESUMEN Y ENVÍO POR WHATSAPP -->
+    <section id="secCarrito" class="seccion-oculta">
+      <div class="banner-bienvenida">
+        <h2>Resumen de tu Pedido 📋</h2>
+        <p>Revisá el detalle de tu compra antes de enviar el mensaje a la pastelería.</p>
+      </div>
+
+      <!-- CONTENEDOR EN 2 COLUMNAS -->
+      <div class="grilla-resumen-carrito">
+        
+        <!-- DIV 1 (IZQUIERDA): PRODUCTOS Y TOTAL -->
+        <div class="tarjeta-paso-independiente">
+          <h4 class="subtitulo-form" style="margin-top: 0;">Detalle de la compra 🛒</h4>
+          <div id="listaCarrito" class="contenedor-items-carrito"></div>
+
+          <div class="linea-total-compra">
+            <span>Total del Pedido:</span>
+            <span id="cartTotal" class="monto-total">$0</span>
+          </div>
+        </div>
+
+        <!-- DIV 2 (DERECHA): DATOS DE ENTREGA -->
+        <div class="tarjeta-paso-independiente">
+          <h4 class="subtitulo-form" style="margin-top: 0;">Datos de entrega 🚚</h4>
+          
+          <div class="formulario-datos-cliente">
+            <div class="campo-grupo">
+              <label>Nombre y Apellido *</label>
+              <input type="text" id="clienteNombre" placeholder="Ej: María González" class="campo-texto">
+            </div>
+
+            <div class="columnas-2">
+              <div class="campo-grupo">
+                <label>Fecha de Entrega *</label>
+                <input type="date" id="clienteFecha" class="campo-texto">
+              </div>
+              <div class="campo-grupo">
+                <label>Modalidad</label>
+                <select id="clienteMetodo" class="campo-texto">
+                  <option value="retiro">Retiro por local</option>
+                  <option value="envio">Envío a domicilio</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="campo-grupo">
+              <label>Aclaraciones / Notas adicionales:</label>
+              <textarea id="clienteAclaraciones" rows="2" placeholder="Ej: Pasa a retirar a las 17hs" class="campo-texto"></textarea>
+            </div>
+          </div>
+
+          <button onclick="enviarPedidoWhatsApp()" class="boton-whatsapp">
+            <i data-lucide="message-circle"></i>
+            <span>Enviar Pedido por WhatsApp</span>
+          </button>
+        </div>
+
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Archivo JS -->
+  <script src="js/index.js"></script>
+</body>
+</html>
