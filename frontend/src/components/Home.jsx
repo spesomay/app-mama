@@ -18,7 +18,7 @@ import { getGalleryItems } from '../services/galleryService.js';
 import ArmaTuDesayuno from './ArmaTuDesayuno.jsx';
 
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
-const WHATSAPP_NUMERO = import.meta.env.VITE_WHATSAPP_PHONE || '5491155856994';
+const WHATSAPP_NUMERO = import.meta.env.VITE_WHATSAPP_PHONE || '54911558569943';
 
 export default function Home({ activeTab, setActiveTab, cart, setCart }) {
   const [subCatDesayuno, setSubCatDesayuno] = useState('Todos');
