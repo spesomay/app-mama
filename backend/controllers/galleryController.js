@@ -7,13 +7,19 @@ const GalleryItem = require('../models/GalleryItem');
  */
 function removeLocalFile(imagePath) {
   if (!imagePath || !imagePath.startsWith('/uploads/')) return;
-  const fileName = path.basename(imagePath);
-  const fullPath = path.join(__dirname, '..', 'uploads', fileName);
-  fs.unlink(fullPath, (err) => {
-    if (err && err.code !== 'ENOENT') {
-      console.warn('No se pudo eliminar el archivo de la galería:', fullPath, err.message);
+  try {
+    const fileName = path.basename(imagePath);
+    const fullPath = path.join(__dirname, '..', 'uploads', fileName);
+    if (fs.existsSync(fullPath)) {
+      fs.unlink(fullPath, (err) => {
+        if (err && err.code !== 'ENOENT') {
+          console.warn('No se pudo eliminar el archivo de la galería:', fullPath, err.message);
+        }
+      });
     }
-  });
+  } catch (err) {
+    // Silencioso en entornos serverless de sólo lectura
+  }
 }
 
 /**
@@ -51,7 +57,13 @@ exports.createGalleryItem = async (req, res, next) => {
 
     let imagenFinal = '';
     if (req.file) {
-      imagenFinal = `/uploads/${req.file.filename}`;
+      if (req.file.buffer) {
+        // En memoria (Vercel Serverless) -> Base64 Data URI
+        imagenFinal = `data:${req.file.mimetype};base64,${req.file.buffer.toString('base64')}`;
+      } else if (req.file.filename) {
+        // En disco (Servidor local)
+        imagenFinal = `/uploads/${req.file.filename}`;
+      }
     } else if (req.body.imagen && String(req.body.imagen).trim()) {
       imagenFinal = String(req.body.imagen).trim();
     } else {
