@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
+import AdminLogin from './admin/AdminLogin';
 import AdminProductForm from './admin/AdminProductForm';
 import AdminProductList from './admin/AdminProductList';
 import AdminGalleryManager from './admin/AdminGalleryManager';
@@ -11,6 +12,11 @@ import {
 } from '../services/productService';
 
 export default function Admin() {
+  // Estado de autenticación protegido mediante sessionStorage
+  const [isAuthenticated, setIsAuthenticated] = useState(() => {
+    return sessionStorage.getItem('hechobygaby_admin_session') === 'authenticated';
+  });
+
   const [activeAdminSection, setActiveAdminSection] = useState('products'); // 'products' o 'gallery'
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -27,8 +33,9 @@ export default function Admin() {
     }, 5000);
   };
 
-  // Cargar lista de productos
+  // Cargar lista de productos solo si está autenticado
   const loadProducts = useCallback(() => {
+    if (!isAuthenticated) return;
     getProducts()
       .then((data) => {
         setProducts(data);
@@ -39,14 +46,23 @@ export default function Admin() {
         setLoading(false);
         showFeedback(
           'error',
-          'No se pudo conectar con el servidor backend. Verificá que el servidor en http://localhost:5000 esté corriendo.'
+          'No se pudo conectar con el servidor backend. Verificá tu conexión o que el backend esté activo.'
         );
       });
-  }, []);
+  }, [isAuthenticated]);
 
   useEffect(() => {
-    loadProducts();
-  }, [loadProducts]);
+    if (isAuthenticated) {
+      loadProducts();
+    }
+  }, [isAuthenticated, loadProducts]);
+
+  // Cerrar sesión
+  const handleLogout = () => {
+    sessionStorage.removeItem('hechobygaby_admin_session');
+    setIsAuthenticated(false);
+    setEditingProduct(null);
+  };
 
   // Manejador para Crear o Actualizar Producto
   const handleSaveProduct = async (formData, resetForm) => {
@@ -57,7 +73,7 @@ export default function Admin() {
       if (editingProduct) {
         // Modo Edición (PUT)
         const updated = await updateProduct(editingProduct._id, formData);
-        showFeedback('success', `¡Producto "${updated.nombre}" actualizado con éxito!`);
+        showFeedback('success', `¡Producto "${updated.nombre}" actualizado con éxito en MongoDB!`);
         setEditingProduct(null);
       } else {
         // Modo Creación (POST)
@@ -128,6 +144,16 @@ export default function Admin() {
     }
   };
 
+  // ----------------------------------------------------
+  // SI NO ESTÁ AUTENTICADO: MOSTRAR BARRERA DE SEGURIDAD
+  // ----------------------------------------------------
+  if (!isAuthenticated) {
+    return <AdminLogin onLoginSuccess={() => setIsAuthenticated(true)} />;
+  }
+
+  // ----------------------------------------------------
+  // SI ESTÁ AUTENTICADO: MOSTRAR PANEL COMPLETO
+  // ----------------------------------------------------
   return (
     <div style={{ maxWidth: '1000px', margin: '0 auto', padding: '2rem 1.25rem' }}>
       {/* ENCABEZADO DEL PANEL */}
@@ -142,17 +168,41 @@ export default function Admin() {
         }}
       >
         <div>
-          <h2 style={{ fontFamily: 'Georgia, serif', color: 'var(--texto-oscuro)', fontSize: '1.6rem' }}>
-            ⚙️ Panel de Administración - Gaby
-          </h2>
-          <p style={{ color: 'var(--texto-gris)', fontSize: '0.9rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <h2 style={{ fontFamily: 'Georgia, serif', color: 'var(--texto-oscuro)', fontSize: '1.6rem' }}>
+              ⚙️ Panel de Administración
+            </h2>
+            <span
+              style={{
+                fontSize: '0.75rem',
+                padding: '0.2rem 0.5rem',
+                borderRadius: '10px',
+                background: '#dcfce7',
+                color: '#15803d',
+                fontWeight: 600
+              }}
+            >
+              Sesión Segura
+            </span>
+          </div>
+          <p style={{ color: 'var(--texto-gris)', fontSize: '0.9rem', marginTop: '0.2rem' }}>
             Gestión completa de Catálogo de Productos y Galería de Fotos en MongoDB Atlas
           </p>
         </div>
 
-        <Link to="/" className="boton-admin-link">
-          ← Volver a la Tienda
-        </Link>
+        <div style={{ display: 'flex', gap: '0.6rem', alignItems: 'center', flexWrap: 'wrap' }}>
+          <Link to="/" className="boton-admin-link" title="Ver la tienda visible para clientes">
+            🏪 Ver Tienda
+          </Link>
+          <button
+            type="button"
+            onClick={handleLogout}
+            className="boton-admin-logout"
+            title="Cerrar la sesión administrativa"
+          >
+            🔒 Salir
+          </button>
+        </div>
       </div>
 
       {/* PESTAÑAS DE NAVEGACIÓN DENTRO DEL PANEL ADMIN */}

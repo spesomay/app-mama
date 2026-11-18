@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { BrowserRouter, Routes, Route, Link, useNavigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Link, useNavigate, Navigate } from 'react-router-dom';
 import Home from './components/Home.jsx';
 import Admin from './components/Admin.jsx';
 import './App.css';
@@ -15,10 +15,6 @@ function HeaderActions({ cart, setActiveTab, darkMode, setDarkMode }) {
 
   return (
     <div className="acciones-encabezado">
-      <Link to="/admin" className="boton-admin-link" title="Panel de Administración">
-        ⚙️ Admin
-      </Link>
-
       <button
         onClick={() => setDarkMode(!darkMode)}
         className="boton-icono"
@@ -104,6 +100,7 @@ export default function App() {
 
         <main>
           <Routes>
+            {/* RUTA PÚBLICA PRINCIPAL (TIENDA, CATÁLOGO, DESAYUNOS, GALERÍA) */}
             <Route
               path="/"
               element={
@@ -115,7 +112,16 @@ export default function App() {
                 />
               }
             />
-            <Route path="/admin" element={<Admin />} />
+
+            {/* RUTA PRIVADA OCULTA: Requiere contraseña para acceder */}
+            <Route path="/panel-privado" element={<Admin />} />
+            <Route path="/admin-secreto" element={<Navigate to="/panel-privado" replace />} />
+
+            {/* PROTECCIÓN DISCRETA: Si alguien escribe '/admin', se redirige silenciosamente al inicio */}
+            <Route path="/admin" element={<Navigate to="/" replace />} />
+
+            {/* CUALQUIER OTRA RUTA REDIRIGE A LA TIENDA PÚBLICA */}
+            <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </main>
       </div>
