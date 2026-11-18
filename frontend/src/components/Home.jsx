@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import axios from 'axios';
 import '../App.css';
 import {
@@ -15,16 +15,23 @@ import {
 import { formatPrice } from '../utils/formatters.js';
 import { getProductImageUrl } from '../services/productService.js';
 import { getGalleryItems } from '../services/galleryService.js';
+import { playCartSound } from '../utils/sound.js';
 import ArmaTuDesayuno from './ArmaTuDesayuno.jsx';
 
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 const WHATSAPP_NUMERO = import.meta.env.VITE_WHATSAPP_PHONE || '5491155856994';
 
-export default function Home({ activeTab, setActiveTab, cart, setCart }) {
+export default function Home({ activeTab, setActiveTab, cart, setCart, triggerCartAnimation }) {
   const [subCatDesayuno, setSubCatDesayuno] = useState('Todos');
   const [dbProducts, setDbProducts] = useState([]);
   const [loadingProducts, setLoadingProducts] = useState(true);
   const [dbGallery, setDbGallery] = useState([]);
+
+  // Notificación flotante de confirmación (Toast)
+  const [cartToast, setCartToast] = useState({ visible: false, item: null });
+  // ID del ítem recién agregado para animar su botón
+  const [recentlyAddedId, setRecentlyAddedId] = useState(null);
+  const toastTimerRef = useRef(null);
 
   // Formulario de entrega
   const [datosEntrega, setDatosEntrega] = useState({
@@ -79,11 +86,36 @@ export default function Home({ activeTab, setActiveTab, cart, setCart }) {
 
     return () => {
       isMounted = false;
+      if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
     };
   }, []);
 
-  // Funciones del Carrito
-  const addToCart = (item) => {
+  // Funciones del Carrito con Feedback Sonoro y Visual
+  const addToCart = (item, itemId = null) => {
+    // 1. Sonido suave y alegre (Web Audio API) + vibración háptica móvil
+    playCartSound();
+
+    // 2. Animación de rebote visual en el botón de carrito del encabezado
+    if (triggerCartAnimation) {
+      triggerCartAnimation();
+    }
+
+    // 3. Feedback visual momentáneo en el botón pulsado
+    if (itemId) {
+      setRecentlyAddedId(itemId);
+      setTimeout(() => {
+        setRecentlyAddedId((curr) => (curr === itemId ? null : curr));
+      }, 1200);
+    }
+
+    // 4. Mostrar notificación flotante (Toast)
+    if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
+    setCartToast({ visible: true, item });
+    toastTimerRef.current = setTimeout(() => {
+      setCartToast({ visible: false, item: null });
+    }, 3200);
+
+    // 5. Agregar producto al estado del carrito
     setCart((prevCart) => {
       const existsIndex = prevCart.findIndex(
         (p) => p.nombre === item.nombre && p.detalle === item.detalle
@@ -707,12 +739,21 @@ export default function Home({ activeTab, setActiveTab, cart, setCart }) {
                           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '10px' }}>
                             <span className="precio-opcion" style={{ fontSize: '1rem' }}>{formatPrice(item.precio)}</span>
                             <button
-                              onClick={() => addToCart({ nombre: item.nombre, precio: item.precio, detalle: item.descripcion || item.categoria })}
-                              className="btn-sumar-restar"
+                              onClick={() =>
+                                addToCart(
+                                  {
+                                    nombre: item.nombre,
+                                    precio: item.precio,
+                                    detalle: item.descripcion || item.categoria
+                                  },
+                                  item._id || item.nombre
+                                )
+                              }
+                              className={`btn-sumar-restar ${recentlyAddedId === (item._id || item.nombre) ? 'btn-sumar-exito' : ''}`}
                               title="Agregar al pedido"
                               type="button"
                             >
-                              +
+                              {recentlyAddedId === (item._id || item.nombre) ? '✓' : '+'}
                             </button>
                           </div>
                         </div>
@@ -820,6 +861,39 @@ export default function Home({ activeTab, setActiveTab, cart, setCart }) {
           </div>
         )}
       </div>
+
+      {/* NOTIFICACIÓN TOAST FLOTANTE DE CONFIRMACIÓN */}
+      {cartToast.visible && cartToast.item && (
+        <div className="cart-toast-contenedor" role="status" aria-live="polite">
+          <div className="cart-toast-icono">🛍️</div>
+          <div className="cart-toast-contenido">
+            <strong className="cart-toast-titulo">¡Agregado al pedido!</strong>
+            <span className="cart-toast-descripcion">
+              {cartToast.item.nombre}
+            </span>
+          </div>
+          <button
+            type="button"
+            onClick={() => {
+              setActiveTab('resumen');
+              setCartToast({ visible: false, item: null });
+              window.scrollTo({ top: 0, behavior: 'smooth' });
+            }}
+            className="cart-toast-boton-ver"
+          >
+            Ver Pedido 🛒
+          </button>
+          <button
+            type="button"
+            onClick={() => setCartToast({ visible: false, item: null })}
+            className="cart-toast-boton-cerrar"
+            title="Cerrar notificación"
+            aria-label="Cerrar notificación"
+          >
+            ✕
+          </button>
+        </div>
+      )}
     </div>
   );
 }

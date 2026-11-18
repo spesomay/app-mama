@@ -4,7 +4,7 @@ import Home from './components/Home.jsx';
 import Admin from './components/Admin.jsx';
 import './App.css';
 
-function HeaderActions({ cart, setActiveTab, darkMode, setDarkMode }) {
+function HeaderActions({ cart, setActiveTab, darkMode, setDarkMode, isCartBumping }) {
   const navigate = useNavigate();
   const cartCount = cart.reduce((acc, item) => acc + item.cantidad, 0);
 
@@ -24,7 +24,11 @@ function HeaderActions({ cart, setActiveTab, darkMode, setDarkMode }) {
         {darkMode ? '☀️' : '🌙'}
       </button>
 
-      <button onClick={handleGoToCart} className="boton-pedido" type="button">
+      <button
+        onClick={handleGoToCart}
+        className={`boton-pedido ${isCartBumping ? 'cart-bumping-anim' : ''}`}
+        type="button"
+      >
         <span>🛒 Mi Pedido</span>
         <span className="contador-pedido">{cartCount}</span>
       </button>
@@ -49,6 +53,14 @@ export default function App() {
       return [];
     }
   });
+
+  // Estado para la animación visual de rebote del botón de carrito en el encabezado
+  const [isCartBumping, setIsCartBumping] = useState(false);
+
+  const triggerCartAnimation = () => {
+    setIsCartBumping(true);
+    setTimeout(() => setIsCartBumping(false), 650);
+  };
 
   // Guardar carrito ante cambios
   useEffect(() => {
@@ -94,6 +106,7 @@ export default function App() {
               setActiveTab={setActiveTab}
               darkMode={darkMode}
               setDarkMode={setDarkMode}
+              isCartBumping={isCartBumping}
             />
           </div>
         </header>
@@ -109,6 +122,7 @@ export default function App() {
                   setActiveTab={setActiveTab}
                   cart={cart}
                   setCart={setCart}
+                  triggerCartAnimation={triggerCartAnimation}
                 />
               }
             />

@@ -1123,3 +1123,163 @@ button, input, select, textarea {
   }
 }
 
+/* ----------------------------------------------------
+   ANIMACIONES & FEEDBACK DE CARRITO (VISUAL & SONORO)
+   ---------------------------------------------------- */
+
+/* Animación de rebote con brillo en el botón de carrito del encabezado */
+.cart-bumping-anim {
+  animation: cartBumpEffect 0.65s cubic-bezier(0.175, 0.885, 0.32, 1.275) !important;
+}
+
+@keyframes cartBumpEffect {
+  0% {
+    transform: scale(1);
+  }
+  30% {
+    transform: scale(1.22);
+    box-shadow: 0 0 18px rgba(255, 77, 109, 0.55);
+  }
+  60% {
+    transform: scale(0.95);
+  }
+  100% {
+    transform: scale(1);
+    box-shadow: none;
+  }
+}
+
+/* Feedback momentáneo en los botones de productos al agregar */
+.btn-sumar-exito {
+  background-color: var(--verde-whatsapp) !important;
+  color: #ffffff !important;
+  transform: scale(1.2) !important;
+  transition: all 0.15s ease !important;
+}
+
+/* Notificación flotante (Toast) en la parte inferior de la pantalla */
+.cart-toast-contenedor {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 9999;
+  background-color: var(--blanco-card);
+  border: 1.5px solid var(--rosa-principal);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.18);
+  border-radius: 50px;
+  padding: 0.65rem 1.15rem 0.65rem 0.9rem;
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  max-width: 92vw;
+  animation: toastSlideUp 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+[data-theme="dark"] .cart-toast-contenedor {
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
+  border-color: var(--rosa-hover);
+}
+
+@keyframes toastSlideUp {
+  from {
+    opacity: 0;
+    transform: translate(-50%, 35px);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+}
+
+.cart-toast-icono {
+  font-size: 1.4rem;
+  line-height: 1;
+}
+
+.cart-toast-contenido {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.cart-toast-titulo {
+  font-size: 0.82rem;
+  color: var(--rosa-principal);
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.cart-toast-descripcion {
+  font-size: 0.85rem;
+  color: var(--texto-oscuro);
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 240px;
+}
+
+.cart-toast-boton-ver {
+  background-color: var(--rosa-principal);
+  color: #ffffff;
+  border: none;
+  border-radius: 20px;
+  padding: 0.45rem 0.9rem;
+  font-size: 0.82rem;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.15s ease;
+  min-height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.cart-toast-boton-ver:hover {
+  background-color: var(--rosa-hover);
+  transform: scale(1.05);
+}
+
+.cart-toast-boton-cerrar {
+  background: none;
+  border: none;
+  color: var(--texto-gris);
+  cursor: pointer;
+  font-size: 1.1rem;
+  padding: 4px 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+  border-radius: 50%;
+  transition: color 0.15s ease;
+}
+
+.cart-toast-boton-cerrar:hover {
+  color: var(--texto-oscuro);
+}
+
+@media (max-width: 600px) {
+  .cart-toast-contenedor {
+    bottom: 16px;
+    width: 94%;
+    padding: 0.6rem 0.85rem;
+    border-radius: 20px;
+    gap: 0.6rem;
+  }
+
+  .cart-toast-descripcion {
+    max-width: 130px;
+    font-size: 0.8rem;
+  }
+
+  .cart-toast-boton-ver {
+    padding: 0.35rem 0.65rem;
+    font-size: 0.78rem;
+    min-height: 32px;
+  }
+}
+
+
