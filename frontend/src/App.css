@@ -470,8 +470,9 @@ button, input, select, textarea {
 
 @media (min-width: 900px) {
   .diseno-grid-torta {
-    grid-template-columns: 1fr 380px;
+    grid-template-columns: minmax(0, 1fr) minmax(310px, 360px);
     gap: 1.5rem;
+    align-items: start;
   }
 }
 
@@ -530,6 +531,115 @@ button, input, select, textarea {
   margin-top: 0.35rem;
 }
 
+/* ==========================================================================
+   TARJETAS DE TAMAÑO DE TORTAS PERSONALIZADAS (DISEÑO DELICADO Y LIMPIO)
+   ========================================================================== */
+
+.grilla-tamanos-torta {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 0.75rem;
+}
+
+@media (max-width: 480px) {
+  .grilla-tamanos-torta {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.6rem;
+  }
+}
+
+.tarjeta-tamano-torta {
+  background-color: var(--blanco-card);
+  border: 1.5px solid var(--rosa-borde);
+  border-radius: 14px;
+  padding: 1rem 0.85rem;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 0.65rem;
+  text-align: left;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.02);
+  min-height: 105px;
+  position: relative;
+  box-sizing: border-box;
+}
+
+.tarjeta-tamano-torta:hover {
+  border-color: var(--rosa-principal);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(255, 77, 109, 0.08);
+}
+
+.tarjeta-tamano-torta.seleccionada {
+  border-color: var(--rosa-principal);
+  background-color: #fff8fa;
+  box-shadow: 0 4px 15px rgba(255, 77, 109, 0.12);
+}
+
+.tamano-header {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.tamano-titulo {
+  font-size: 0.96rem;
+  font-weight: 700;
+  color: var(--texto-oscuro);
+  line-height: 1.2;
+}
+
+.tamano-porciones {
+  font-size: 0.78rem;
+  color: var(--texto-gris);
+  font-weight: 500;
+  line-height: 1.25;
+}
+
+.tamano-footer {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  margin-top: auto;
+  padding-top: 0.45rem;
+  border-top: 1px dashed rgba(255, 77, 109, 0.18);
+}
+
+.tamano-precio {
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: var(--rosa-principal);
+  line-height: 1.1;
+}
+
+.tamano-rellenos-guia {
+  font-size: 0.76rem;
+  color: var(--texto-gris);
+  font-weight: 500;
+  line-height: 1.2;
+}
+
+.tarjeta-tamano-torta.seleccionada .tamano-rellenos-guia {
+  color: #c92a48;
+  font-weight: 600;
+}
+
+[data-theme="dark"] .tarjeta-tamano-torta {
+  background-color: var(--blanco-card);
+  border-color: var(--rosa-borde);
+}
+
+[data-theme="dark"] .tarjeta-tamano-torta.seleccionada {
+  background-color: #26161b;
+  border-color: var(--rosa-principal);
+}
+
+[data-theme="dark"] .tarjeta-tamano-torta.seleccionada .tamano-rellenos-guia {
+  color: #ff859b;
+}
+
 /* ----------------------------------------------------
    VISTA PREVIA LATERAL / INFERIOR (RESPONSIVA)
    ---------------------------------------------------- */
@@ -537,11 +647,14 @@ button, input, select, textarea {
   background-color: var(--blanco-card);
   border: 1px solid var(--rosa-borde);
   border-radius: 18px;
-  padding: 1.25rem;
+  padding: 1.35rem 1.4rem;
   box-shadow: var(--sombra-suave);
   text-align: left;
   position: relative;
   top: 0;
+  width: 100%;
+  box-sizing: border-box;
+  overflow: hidden;
 }
 
 @media (min-width: 900px) {
@@ -618,34 +731,79 @@ button, input, select, textarea {
 .resumen-lista-detalles {
   display: flex;
   flex-direction: column;
-  gap: 0.55rem;
-  font-size: 0.85rem;
-  margin-bottom: 1.1rem;
+  gap: 0.65rem;
+  font-size: 0.88rem;
+  margin-bottom: 1.2rem;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .fila-detalle {
   display: flex;
   justify-content: space-between;
-  align-items: center;
+  align-items: baseline;
+  gap: 0.85rem;
+  padding: 0.4rem 0;
+  border-bottom: 1px dashed rgba(255, 77, 109, 0.15);
+  width: 100%;
+  box-sizing: border-box;
 }
 
-.fila-detalle.columna {
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 0.25rem;
+.fila-detalle:last-child {
+  border-bottom: none;
 }
 
 .label-det {
   color: var(--texto-gris);
+  font-size: 0.84rem;
+  font-weight: 500;
+  flex-shrink: 0;
+  min-width: 75px;
 }
 
 .val-det {
-  font-weight: 700;
+  font-weight: 600;
   color: var(--texto-oscuro);
+  font-size: 0.88rem;
+  text-align: right;
+  word-break: break-word;
+  overflow-wrap: break-word;
+  min-width: 0;
+  flex-grow: 1;
 }
 
 .val-det.destacado {
   color: var(--rosa-principal);
+  font-weight: 700;
+}
+
+.fila-detalle.columna {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0.4rem;
+  background: var(--rosa-fondo);
+  border: 1px solid var(--rosa-borde);
+  border-radius: 12px;
+  padding: 0.75rem 0.9rem;
+  margin-top: 0.35rem;
+  border-bottom: none;
+}
+
+.fila-detalle.columna .label-det {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--texto-oscuro);
+}
+
+.fila-detalle.columna .val-det {
+  text-align: left;
+  font-size: 0.84rem;
+  width: 100%;
+}
+
+[data-theme="dark"] .fila-detalle.columna {
+  background-color: #1a1a1a;
+  border-color: #4a242c;
 }
 
 .bloque-total-est {

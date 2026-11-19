@@ -22,6 +22,34 @@ import ArmaTuDesayuno from './ArmaTuDesayuno.jsx';
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 const WHATSAPP_NUMERO = import.meta.env.VITE_WHATSAPP_PHONE || '5491155856994';
 
+// Función para desglosar limpiamente el nombre del tamaño y sus porciones
+const parseTamanoNombre = (nombre = '', descripcion = '') => {
+  if (!nombre) return { titulo: '', porciones: descripcion || null };
+
+  // Formato tipo: "Chica (8 - 10 porciones)" o "Chica (8 a 10 porc.)"
+  const matchParen = nombre.match(/^([^(]+?)\s*\((.+?)\)$/);
+  if (matchParen) {
+    return {
+      titulo: matchParen[1].trim(),
+      porciones: matchParen[2].trim()
+    };
+  }
+
+  // Formato tipo: "Chica - 8 a 10 porciones" o "Chica: 8 a 10 porciones"
+  const matchDash = nombre.split(/\s*[-–—:]\s*/);
+  if (matchDash.length > 1) {
+    return {
+      titulo: matchDash[0].trim(),
+      porciones: matchDash.slice(1).join(' - ').trim()
+    };
+  }
+
+  return {
+    titulo: nombre.trim(),
+    porciones: descripcion ? descripcion.trim() : null
+  };
+};
+
 export default function Home({ activeTab, setActiveTab, cart, setCart, triggerCartAnimation }) {
   const [subCatDesayuno, setSubCatDesayuno] = useState('Todos');
   const [dbProducts, setDbProducts] = useState([]);
@@ -493,33 +521,31 @@ export default function Home({ activeTab, setActiveTab, cart, setCart, triggerCa
                         <span className="numero-paso">2</span>
                         <h3>Tamaño (Porciones):</h3>
                       </div>
-                      <div className="grilla-opciones">
-                        {cakeOptions.tamanos.map((t) => (
-                          <div
-                            key={t._id || t.nombre}
-                            onClick={() => handleSelectTamano(t)}
-                            className={`tarjeta-opcion ${customCake.tamano?.nombre === t.nombre ? 'seleccionada' : ''}`}
-                          >
-                            <strong className="nombre-opcion">{t.nombre}</strong>
-                            <span className="precio-opcion" style={{ color: 'var(--rosa-principal)' }}>
-                              Base: {formatPrice(t.precio)}
-                            </span>
-                            <span
-                              style={{
-                                display: 'inline-block',
-                                fontSize: '0.72rem',
-                                background: customCake.tamano?.nombre === t.nombre ? 'var(--rosa-principal)' : 'var(--rosa-suave)',
-                                color: customCake.tamano?.nombre === t.nombre ? '#ffffff' : 'var(--rosa-principal)',
-                                padding: '2px 7px',
-                                borderRadius: '8px',
-                                fontWeight: 700,
-                                marginTop: '4px'
-                              }}
+                      <div className="grilla-tamanos-torta">
+                        {cakeOptions.tamanos.map((t) => {
+                          const isSelected = customCake.tamano?.nombre === t.nombre;
+                          const parsed = parseTamanoNombre(t.nombre, t.descripcion);
+                          return (
+                            <div
+                              key={t._id || t.nombre}
+                              onClick={() => handleSelectTamano(t)}
+                              className={`tarjeta-tamano-torta ${isSelected ? 'seleccionada' : ''}`}
                             >
-                              ⚡ Admite hasta {t.maxRellenos || 1} {t.maxRellenos === 1 ? 'relleno' : 'rellenos'}
-                            </span>
-                          </div>
-                        ))}
+                              <div className="tamano-header">
+                                <strong className="tamano-titulo">{parsed.titulo}</strong>
+                                {parsed.porciones && (
+                                  <span className="tamano-porciones">{parsed.porciones}</span>
+                                )}
+                              </div>
+                              <div className="tamano-footer">
+                                <span className="tamano-precio">{formatPrice(t.precio)}</span>
+                                <span className="tamano-rellenos-guia">
+                                  {t.maxRellenos === 1 ? 'Hasta 1 relleno' : `Hasta ${t.maxRellenos || 1} rellenos`}
+                                </span>
+                              </div>
+                            </div>
+                          );
+                        })}
                       </div>
                     </div>
 
@@ -555,7 +581,7 @@ export default function Home({ activeTab, setActiveTab, cart, setCart, triggerCa
                         </span>
                       </div>
                       <div style={{ margin: '0 0 10px 0', fontSize: '0.82rem', color: 'var(--texto-gris)' }}>
-                        ⚡ Para el tamaño <strong>{customCake.tamano?.nombre}</strong> podés elegir hasta <strong>{maxRellenosPermitidos} {maxRellenosPermitidos === 1 ? 'relleno' : 'rellenos'}</strong>.
+                        Para el tamaño <strong>{customCake.tamano?.nombre}</strong> podés elegir hasta <strong>{maxRellenosPermitidos} {maxRellenosPermitidos === 1 ? 'relleno' : 'rellenos'}</strong>.
                       </div>
                       <div className="grilla-opciones">
                         {cakeOptions.rellenos.map((r) => {
@@ -688,17 +714,30 @@ export default function Home({ activeTab, setActiveTab, cart, setCart, triggerCa
                         <span className="numero-paso">2</span>
                         <h3>Tamaño (Porciones):</h3>
                       </div>
-                      <div className="grilla-opciones">
-                        {TAMANOS_TARTAS.map((tam) => (
-                          <div
-                            key={tam.nombre}
-                            onClick={() => setCustomTarta({ ...customTarta, tamano: tam })}
-                            className={`tarjeta-opcion ${customTarta.tamano.nombre === tam.nombre ? 'seleccionada' : ''}`}
-                          >
-                            <strong className="nombre-opcion">{tam.nombre}</strong>
-                            {tam.extra > 0 && <span className="precio-opcion">+{formatPrice(tam.extra)}</span>}
-                          </div>
-                        ))}
+                      <div className="grilla-tamanos-torta">
+                        {TAMANOS_TARTAS.map((tam) => {
+                          const isSelected = customTarta.tamano.nombre === tam.nombre;
+                          const parsed = parseTamanoNombre(tam.nombre);
+                          return (
+                            <div
+                              key={tam.nombre}
+                              onClick={() => setCustomTarta({ ...customTarta, tamano: tam })}
+                              className={`tarjeta-tamano-torta ${isSelected ? 'seleccionada' : ''}`}
+                            >
+                              <div className="tamano-header">
+                                <strong className="tamano-titulo">{parsed.titulo}</strong>
+                                {parsed.porciones && (
+                                  <span className="tamano-porciones">{parsed.porciones}</span>
+                                )}
+                              </div>
+                              <div className="tamano-footer">
+                                <span className="tamano-precio">
+                                  {tam.extra > 0 ? `+${formatPrice(tam.extra)}` : 'Incluido'}
+                                </span>
+                              </div>
+                            </div>
+                          );
+                        })}
                       </div>
                     </div>
 
