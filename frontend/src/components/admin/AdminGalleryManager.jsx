@@ -1,18 +1,27 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { getGalleryItems, createGalleryItem, deleteGalleryItem } from '../../services/galleryService';
+import {
+  getGalleryItems,
+  createGalleryItem,
+  updateGalleryItem,
+  deleteGalleryItem
+} from '../../services/galleryService';
 import { getProductImageUrl } from '../../services/productService';
-import { formatDate } from '../../utils/formatters';
+import { formatPrice } from '../../utils/formatters';
+
+const CATEGORIAS_GALERIA = ['Tortas', 'Tartas', 'Cajas de Desayuno', 'Mesa Dulce'];
 
 export default function AdminGalleryManager() {
   const [galleryItems, setGalleryItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [categoriaFiltro, setCategoriaFiltro] = useState('Todos');
+  const [editingItem, setEditingItem] = useState(null);
 
   // Estado del formulario
   const [titulo, setTitulo] = useState('');
   const [descripcion, setDescripcion] = useState('');
   const [categoria, setCategoria] = useState('Tortas');
+  const [precio, setPrecio] = useState('');
   const [imageMode, setImageMode] = useState('file'); // 'file' o 'url'
   const [selectedFile, setSelectedFile] = useState(null);
   const [filePreview, setFilePreview] = useState('');
@@ -55,8 +64,8 @@ export default function AdminGalleryManager() {
       return;
     }
 
-    if (file.size > 5 * 1024 * 1024) {
-      showFeedback('error', 'La imagen supera los 5MB.');
+    if (file.size > 10 * 1024 * 1024) {
+      showFeedback('error', 'La imagen supera los 10MB.');
       return;
     }
 
@@ -68,82 +77,118 @@ export default function AdminGalleryManager() {
   const handleClearImage = () => {
     setSelectedFile(null);
     setFilePreview('');
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+
+  const resetForm = () => {
+    setEditingItem(null);
+    setTitulo('');
+    setDescripcion('');
+    setCategoria('Tortas');
+    setPrecio('');
+    handleClearImage();
     setImageUrl('');
-    if (fileInputRef.current) fileInputRef.current.value = '';
+  };
+
+  const handleStartEdit = (item) => {
+    setEditingItem(item);
+    setTitulo(item.titulo);
+    setDescripcion(item.descripcion || '');
+    setCategoria(item.categoria || 'Tortas');
+    setPrecio(item.precio ? String(item.precio) : '');
+
+    if (item.imagen) {
+      setImageMode('url');
+      setImageUrl(item.imagen);
+    } else {
+      setImageMode('file');
+      setImageUrl('');
+    }
+    handleClearImage();
+    window.scrollTo({ top: 120, behavior: 'smooth' });
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
     if (!titulo.trim()) {
-      showFeedback('error', 'Ingresá un título o nombre para la foto.');
+      showFeedback('error', 'El título de la foto o trabajo es obligatorio.');
       return;
     }
 
-    if (imageMode === 'file' && !selectedFile) {
-      showFeedback('error', 'Debés seleccionar una imagen desde tu dispositivo.');
+    if (imageMode === 'file' && !selectedFile && !editingItem) {
+      showFeedback('error', 'Por favor seleccioná una foto desde tu dispositivo.');
       return;
     }
 
-    if (imageMode === 'url' && !imageUrl.trim()) {
-      showFeedback('error', 'Debés ingresar una URL de imagen válida.');
+    if (imageMode === 'url' && !imageUrl.trim() && !editingItem) {
+      showFeedback('error', 'Por favor ingresá la URL de la imagen.');
       return;
     }
 
     setIsSubmitting(true);
+    setFeedback({ type: '', text: '' });
+
     try {
       const formData = new FormData();
       formData.append('titulo', titulo.trim());
       formData.append('descripcion', descripcion.trim());
       formData.append('categoria', categoria);
+      formData.append('precio', precio ? Number(precio) : 0);
 
-      if (imageMode === 'file') {
+      if (imageMode === 'file' && selectedFile) {
         formData.append('imagen', selectedFile);
-      } else {
+      } else if (imageMode === 'url' && imageUrl.trim()) {
         formData.append('imagen', imageUrl.trim());
+      } else if (editingItem && editingItem.imagen && !selectedFile) {
+        formData.append('imagen', editingItem.imagen);
       }
 
-      await createGalleryItem(formData);
-      showFeedback('success', `¡Foto "${titulo.trim()}" publicada con éxito en la galería!`);
+      if (editingItem) {
+        await updateGalleryItem(editingItem._id, formData);
+        showFeedback('success', '¡Foto y datos de la galería actualizados con éxito en MongoDB!');
+      } else {
+        await createGalleryItem(formData);
+        showFeedback('success', '¡Foto guardada con éxito en la galería de MongoDB Atlas!');
+      }
 
-      // Limpiar formulario
-      setTitulo('');
-      setDescripcion('');
-      setCategoria('Tortas');
-      handleClearImage();
+      resetForm();
       loadGallery();
     } catch (err) {
-      console.error('Error al subir a galería:', err);
+      console.error('Error al guardar foto:', err);
       const msg = err.response?.data?.error || err.message || 'Error al guardar la foto.';
-      showFeedback('error', `Error: ${msg}`);
+      showFeedback('error', msg);
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  const handleDelete = async (id, itemTitulo) => {
-    const confirmar = window.confirm(`¿Estás segura de eliminar permanentemente la foto "${itemTitulo}" de la galería?`);
-    if (!confirmar) return;
+  const handleDelete = async (id, fotoTitulo) => {
+    const confirm = window.confirm(`¿Estás segura de eliminar permanentemente la foto "${fotoTitulo}" de la galería?`);
+    if (!confirm) return;
 
     try {
       await deleteGalleryItem(id);
-      showFeedback('success', `Foto "${itemTitulo}" eliminada de la galería.`);
+      showFeedback('success', `Foto "${fotoTitulo}" eliminada correctamente.`);
+      if (editingItem && editingItem._id === id) {
+        resetForm();
+      }
       loadGallery();
     } catch (err) {
       console.error('Error al eliminar foto:', err);
-      const msg = err.response?.data?.error || err.message;
-      showFeedback('error', `Error al eliminar: ${msg}`);
+      showFeedback('error', err.response?.data?.error || 'No se pudo eliminar la foto.');
     }
   };
 
-  const filteredItems = galleryItems.filter(
+  const itemsFiltrados = galleryItems.filter(
     (item) => categoriaFiltro === 'Todos' || item.categoria === categoriaFiltro
   );
 
-  const currentPreview = imageMode === 'file' ? filePreview : imageUrl;
-
   return (
     <div>
-      {/* Alerta de Feedback */}
+      {/* ALERTA DE FEEDBACK */}
       {feedback.text && (
         <div
           style={{
@@ -170,315 +215,339 @@ export default function AdminGalleryManager() {
         </div>
       )}
 
-      {/* FORMULARIO DE CARGA DE FOTOS PARA LA GALERÍA */}
-      <div className="tarjeta-paso" style={{ marginBottom: '2rem' }}>
-        <h3 className="subtitulo-form" style={{ margin: 0, marginBottom: '0.5rem' }}>
-          📷 Cargar Nueva Foto a la Galería de Trabajos
-        </h3>
-        <p style={{ color: 'var(--texto-gris)', fontSize: '0.85rem', marginBottom: '1.25rem' }}>
-          Subí fotos de tus tortas terminadas, tartas o cajas de desayuno para que los clientes las vean en la pestaña de Trabajos Realizados.
-        </p>
+      {/* FORMULARIO DE SUBIDA / EDICIÓN */}
+      <div
+        style={{
+          backgroundColor: 'var(--blanco-card)',
+          border: '1px solid var(--rosa-borde)',
+          borderRadius: '16px',
+          padding: '1.5rem',
+          marginBottom: '2rem',
+          boxShadow: '0 4px 15px rgba(0, 0, 0, 0.04)'
+        }}
+      >
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem', flexWrap: 'wrap', gap: '0.5rem' }}>
+          <h3 style={{ fontFamily: 'Georgia, serif', color: 'var(--texto-oscuro)', fontSize: '1.25rem' }}>
+            {editingItem ? `✏️ Editando Foto: ${editingItem.titulo}` : '📸 Subir Nueva Foto a la Galería'}
+          </h3>
+          {editingItem && (
+            <button
+              type="button"
+              onClick={resetForm}
+              className="boton-admin-link"
+              style={{ fontSize: '0.8rem', padding: '0.35rem 0.75rem' }}
+            >
+              Cancelar Edición
+            </button>
+          )}
+        </div>
 
-        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-          {/* SELECCIÓN DE IMAGEN */}
-          <div style={{ background: 'var(--rosa-fondo)', padding: '1.25rem', borderRadius: '14px', border: '1px dashed var(--rosa-borde)' }}>
-            <label style={{ fontSize: '0.9rem', fontWeight: 'bold', display: 'block', marginBottom: '0.6rem', color: 'var(--texto-oscuro)' }}>
-              🖼️ Fotografía del Trabajo *
-            </label>
-
-            <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '0.85rem' }}>
-              <button
-                type="button"
-                onClick={() => setImageMode('file')}
-                className={`pestana ${imageMode === 'file' ? 'activa' : ''}`}
-                style={{ padding: '0.35rem 0.85rem', fontSize: '0.85rem', borderRadius: '20px', border: '1px solid var(--rosa-borde)' }}
-              >
-                📁 Subir foto desde dispositivo
-              </button>
-              <button
-                type="button"
-                onClick={() => setImageMode('url')}
-                className={`pestana ${imageMode === 'url' ? 'activa' : ''}`}
-                style={{ padding: '0.35rem 0.85rem', fontSize: '0.85rem', borderRadius: '20px', border: '1px solid var(--rosa-borde)' }}
-              >
-                🔗 Pegar enlace URL
-              </button>
-            </div>
-
-            <div style={{ display: 'grid', gridTemplateColumns: currentPreview ? '1fr 140px' : '1fr', gap: '1rem', alignItems: 'center' }}>
-              <div>
-                {imageMode === 'file' ? (
-                  <div>
-                    <input
-                      type="file"
-                      ref={fileInputRef}
-                      accept="image/*"
-                      onChange={handleFileChange}
-                      className="campo-texto"
-                      style={{ background: 'white' }}
-                    />
-                    <small style={{ color: 'var(--texto-gris)', display: 'block', marginTop: '4px', fontSize: '0.75rem' }}>
-                      Formatos soportados: JPG, PNG, WEBP (Hasta 5MB).
-                    </small>
-                  </div>
-                ) : (
-                  <div>
-                    <input
-                      type="url"
-                      placeholder="https://ejemplo.com/fotos/torta-chocolate.jpg"
-                      value={imageUrl}
-                      onChange={(e) => setImageUrl(e.target.value)}
-                      className="campo-texto"
-                      style={{ background: 'white' }}
-                    />
-                    <small style={{ color: 'var(--texto-gris)', display: 'block', marginTop: '4px', fontSize: '0.75rem' }}>
-                      Enlace directo a una imagen de la web o red social.
-                    </small>
-                  </div>
-                )}
-              </div>
-
-              {/* Vista previa miniatura */}
-              {currentPreview && (
-                <div style={{ position: 'relative', width: '130px', height: '110px', borderRadius: '12px', overflow: 'hidden', border: '2px solid var(--rosa-principal)', background: 'white' }}>
-                  <img
-                    src={currentPreview}
-                    alt="Vista previa"
-                    style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                    onError={(e) => {
-                      e.currentTarget.style.display = 'none';
-                    }}
-                  />
-                  <button
-                    type="button"
-                    onClick={handleClearImage}
-                    title="Quitar imagen"
-                    style={{
-                      position: 'absolute',
-                      top: '4px',
-                      right: '4px',
-                      background: 'rgba(220, 38, 38, 0.85)',
-                      color: 'white',
-                      border: 'none',
-                      borderRadius: '50%',
-                      width: '24px',
-                      height: '24px',
-                      cursor: 'pointer',
-                      fontSize: '12px',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center'
-                    }}
-                  >
-                    ✕
-                  </button>
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* DATOS DE LA FOTO */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '1rem' }}>
-            <div className="campo-grupo">
-              <label>Título o Nombre del Trabajo *</label>
+        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1.1rem' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1rem' }}>
+            {/* Título */}
+            <div className="campo-formulario">
+              <label className="label-formulario">Título del Trabajo / Torta *</label>
               <input
                 type="text"
-                placeholder="Ej: Torta Drip Cake Rosas y Macarons"
                 value={titulo}
                 onChange={(e) => setTitulo(e.target.value)}
-                className="campo-texto"
+                placeholder="Ej. Torta Drip Cake con Flores"
+                className="input-formulario"
                 required
               />
             </div>
 
-            <div className="campo-grupo">
-              <label>Categoría en Galería *</label>
+            {/* Categoría */}
+            <div className="campo-formulario">
+              <label className="label-formulario">Categoría *</label>
               <select
                 value={categoria}
                 onChange={(e) => setCategoria(e.target.value)}
-                className="campo-texto"
+                className="input-formulario"
               >
-                <option value="Tortas">🎂 Tortas Decoradas</option>
-                <option value="Tartas">🥧 Tartas y Pies</option>
-                <option value="Desayunos">☕ Cajas de Desayuno</option>
-                <option value="Eventos">🎉 Cumpleaños y Eventos</option>
-                <option value="Varios">🧁 Mesas Dulces / Varios</option>
+                {CATEGORIAS_GALERIA.map((cat) => (
+                  <option key={cat} value={cat}>{cat}</option>
+                ))}
               </select>
+            </div>
+
+            {/* Precio de Referencia */}
+            <div className="campo-formulario">
+              <label className="label-formulario">Precio de Referencia ($ ARS)</label>
+              <input
+                type="number"
+                value={precio}
+                onChange={(e) => setPrecio(e.target.value)}
+                placeholder="Ej. 18500 (Opcional)"
+                className="input-formulario"
+                min="0"
+              />
             </div>
           </div>
 
-          <div className="campo-grupo">
-            <label>Descripción o historia del trabajo (opcional)</label>
+          {/* Descripción */}
+          <div className="campo-formulario">
+            <label className="label-formulario">Descripción del Trabajo (Opcional)</label>
             <textarea
-              placeholder="Ej: Bizcochuelo húmedo de vainilla con relleno de dulce de leche con nueces y cobertura de buttercream rosa para los 15 de Sofía..."
               value={descripcion}
               onChange={(e) => setDescripcion(e.target.value)}
-              className="campo-texto"
+              placeholder="Detalles del bizcochuelo, rellenos, ocasión o temáticas..."
+              className="input-formulario"
               rows="2"
+              style={{ resize: 'vertical' }}
             />
           </div>
 
-          <button
-            type="submit"
-            disabled={isSubmitting}
-            className="boton-confirmar"
-            style={{
-              width: 'auto',
-              alignSelf: 'flex-start',
-              padding: '0.85rem 2rem',
-              opacity: isSubmitting ? 0.7 : 1,
-              cursor: isSubmitting ? 'not-allowed' : 'pointer'
-            }}
-          >
-            {isSubmitting ? '⏳ Subiendo foto...' : '📷 Publicar Foto en la Galería'}
-          </button>
+          {/* Selector de Imagen */}
+          <div className="campo-formulario">
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.4rem' }}>
+              <label className="label-formulario" style={{ marginBottom: 0 }}>Foto del Trabajo *</label>
+              <div style={{ display: 'flex', gap: '0.4rem' }}>
+                <button
+                  type="button"
+                  onClick={() => setImageMode('file')}
+                  style={{
+                    border: 'none',
+                    background: imageMode === 'file' ? 'var(--rosa-suave)' : 'transparent',
+                    color: imageMode === 'file' ? 'var(--rosa-principal)' : 'var(--texto-gris)',
+                    padding: '2px 8px',
+                    borderRadius: '8px',
+                    fontSize: '0.75rem',
+                    fontWeight: 600,
+                    cursor: 'pointer'
+                  }}
+                >
+                  📁 Subir Archivo
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setImageMode('url')}
+                  style={{
+                    border: 'none',
+                    background: imageMode === 'url' ? 'var(--rosa-suave)' : 'transparent',
+                    color: imageMode === 'url' ? 'var(--rosa-principal)' : 'var(--texto-gris)',
+                    padding: '2px 8px',
+                    borderRadius: '8px',
+                    fontSize: '0.75rem',
+                    fontWeight: 600,
+                    cursor: 'pointer'
+                  }}
+                >
+                  🔗 URL Web
+                </button>
+              </div>
+            </div>
+
+            {imageMode === 'file' ? (
+              <div>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  onChange={handleFileChange}
+                  className="input-formulario"
+                  style={{ padding: '0.5rem' }}
+                />
+                {filePreview && (
+                  <div style={{ marginTop: '0.75rem', display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                    <img
+                      src={filePreview}
+                      alt="Previsualización"
+                      style={{ width: '80px', height: '80px', objectFit: 'cover', borderRadius: '10px', border: '1px solid var(--rosa-borde)' }}
+                    />
+                    <button
+                      type="button"
+                      onClick={handleClearImage}
+                      style={{ color: '#b91c1c', background: 'none', border: 'none', fontSize: '0.85rem', cursor: 'pointer', textDecoration: 'underline' }}
+                    >
+                      Quitar foto
+                    </button>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div>
+                <input
+                  type="url"
+                  value={imageUrl}
+                  onChange={(e) => setImageUrl(e.target.value)}
+                  placeholder="https://ejemplo.com/foto-torta.jpg"
+                  className="input-formulario"
+                />
+                {imageUrl && (
+                  <div style={{ marginTop: '0.75rem' }}>
+                    <img
+                      src={imageUrl}
+                      alt="Previsualización URL"
+                      style={{ width: '80px', height: '80px', objectFit: 'cover', borderRadius: '10px', border: '1px solid var(--rosa-borde)' }}
+                      onError={(e) => { e.currentTarget.style.display = 'none'; }}
+                    />
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+
+          {/* Botón de Enviar */}
+          <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'flex-end', marginTop: '0.5rem' }}>
+            {editingItem && (
+              <button
+                type="button"
+                onClick={resetForm}
+                className="boton-admin-link"
+                style={{ padding: '0.6rem 1.25rem' }}
+              >
+                Cancelar
+              </button>
+            )}
+            <button
+              type="submit"
+              disabled={isSubmitting}
+              className="admin-btn-ingresar"
+              style={{ width: 'auto', padding: '0.6rem 1.75rem', minHeight: '44px' }}
+            >
+              {isSubmitting ? 'Guardando en MongoDB...' : (editingItem ? '💾 Guardar Cambios' : '📸 Publicar en Galería')}
+            </button>
+          </div>
         </form>
       </div>
 
-      {/* GRILLA DE FOTOS ACTUALES EN LA GALERÍA */}
-      <div className="tarjeta-paso">
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem', flexWrap: 'wrap', gap: '0.75rem' }}>
-          <div>
-            <h3 className="subtitulo-form" style={{ margin: 0 }}>
-              🖼️ Fotos en la Galería ({filteredItems.length} de {galleryItems.length})
-            </h3>
-            <p style={{ fontSize: '0.8rem', color: 'var(--texto-gris)', margin: '2px 0 0 0' }}>
-              Estas imágenes se muestran a los clientes en la pestaña "Galería".
-            </p>
-          </div>
+      {/* FILTROS POR CATEGORÍA */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', flexWrap: 'wrap', gap: '0.5rem' }}>
+        <h4 style={{ color: 'var(--texto-oscuro)', fontSize: '1.1rem', margin: 0 }}>
+          Fotos Publicadas ({itemsFiltrados.length})
+        </h4>
 
-          <button
-            onClick={loadGallery}
-            className="btn-sumar-restar"
-            style={{ width: 'auto', padding: '0.4rem 0.85rem', fontSize: '0.8rem', borderRadius: '14px' }}
-            type="button"
-          >
-            🔄 Actualizar fotos
-          </button>
-        </div>
-
-        {/* Filtro por Categorías */}
-        <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap', marginBottom: '1.25rem' }}>
-          {['Todos', 'Tortas', 'Tartas', 'Desayunos', 'Eventos', 'Varios'].map((cat) => (
+        <div style={{ display: 'flex', gap: '0.35rem', overflowX: 'auto', paddingBottom: '4px' }}>
+          {['Todos', ...CATEGORIAS_GALERIA].map((cat) => (
             <button
               key={cat}
               type="button"
               onClick={() => setCategoriaFiltro(cat)}
-              className={`pestana ${categoriaFiltro === cat ? 'activa' : ''}`}
               style={{
-                border: '1px solid var(--rosa-borde)',
-                borderRadius: '20px',
-                padding: '0.35rem 0.85rem',
-                fontSize: '0.8rem'
+                border: '1px solid',
+                borderColor: categoriaFiltro === cat ? 'var(--rosa-principal)' : 'var(--rosa-borde)',
+                backgroundColor: categoriaFiltro === cat ? 'var(--rosa-principal)' : 'var(--blanco-card)',
+                color: categoriaFiltro === cat ? '#ffffff' : 'var(--texto-oscuro)',
+                padding: '0.3rem 0.75rem',
+                borderRadius: '16px',
+                fontSize: '0.8rem',
+                fontWeight: 600,
+                cursor: 'pointer',
+                whiteSpace: 'nowrap'
               }}
             >
               {cat}
             </button>
           ))}
         </div>
+      </div>
 
-        {loading ? (
-          <p style={{ textAlign: 'center', padding: '30px 0', color: 'var(--texto-gris)' }}>Cargando galería...</p>
-        ) : filteredItems.length === 0 ? (
-          <div style={{ textAlign: 'center', padding: '30px 0', color: 'var(--texto-gris)' }}>
-            <p style={{ fontSize: '1.1rem', marginBottom: '4px' }}>📷 Aún no hay fotos en esta categoría.</p>
-            <small>Cargá tu primera creación usando el formulario de arriba.</small>
-          </div>
-        ) : (
-          <div
-            style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fill, minmax(230px, 1fr))',
-              gap: '1.25rem'
-            }}
-          >
-            {filteredItems.map((item) => {
-              const fullImageUrl = getProductImageUrl(item.imagen);
-
-              return (
-                <div
-                  key={item._id}
+      {/* LISTA EN CUADRÍCULA */}
+      {loading ? (
+        <div style={{ textAlign: 'center', padding: '2rem', color: 'var(--texto-gris)' }}>
+          Cargando fotos de la galería...
+        </div>
+      ) : itemsFiltrados.length === 0 ? (
+        <div style={{ textAlign: 'center', padding: '2.5rem', backgroundColor: 'var(--blanco-card)', borderRadius: '16px', border: '1px dashed var(--rosa-borde)' }}>
+          <p style={{ color: 'var(--texto-gris)', fontSize: '0.95rem' }}>No hay fotos en esta categoría.</p>
+        </div>
+      ) : (
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: '1.25rem' }}>
+          {itemsFiltrados.map((item) => (
+            <div
+              key={item._id}
+              style={{
+                backgroundColor: 'var(--blanco-card)',
+                border: '1px solid var(--rosa-borde)',
+                borderRadius: '14px',
+                overflow: 'hidden',
+                boxShadow: '0 2px 10px rgba(0, 0, 0, 0.05)',
+                display: 'flex',
+                flexDirection: 'column'
+              }}
+            >
+              <div style={{ position: 'relative', height: '170px', backgroundColor: 'var(--rosa-suave)' }}>
+                <img
+                  src={getProductImageUrl(item.imagen)}
+                  alt={item.titulo}
+                  style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                  onError={(e) => {
+                    e.currentTarget.style.display = 'none';
+                  }}
+                />
+                <span
                   style={{
-                    background: 'var(--blanco-card)',
-                    border: '1px solid var(--rosa-borde)',
-                    borderRadius: '16px',
-                    overflow: 'hidden',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    justifyContent: 'space-between',
-                    boxShadow: 'var(--sombra-card)',
-                    transition: 'transform 0.15s ease'
+                    position: 'absolute',
+                    top: '8px',
+                    left: '8px',
+                    backgroundColor: 'rgba(255, 255, 255, 0.92)',
+                    color: 'var(--rosa-principal)',
+                    fontSize: '0.75rem',
+                    fontWeight: 700,
+                    padding: '3px 8px',
+                    borderRadius: '12px',
+                    backdropFilter: 'blur(4px)'
                   }}
                 >
-                  <div style={{ width: '100%', height: '170px', overflow: 'hidden', background: 'var(--rosa-fondo)', position: 'relative' }}>
-                    <img
-                      src={fullImageUrl}
-                      alt={item.titulo}
-                      style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                      onError={(e) => {
-                        e.currentTarget.style.display = 'none';
-                        e.currentTarget.parentElement.innerText = '🍰';
-                      }}
-                    />
-                    <span
-                      style={{
-                        position: 'absolute',
-                        bottom: '8px',
-                        left: '8px',
-                        background: 'rgba(0,0,0,0.65)',
-                        color: 'white',
-                        fontSize: '0.7rem',
-                        fontWeight: 'bold',
-                        padding: '2px 8px',
-                        borderRadius: '10px',
-                        backdropFilter: 'blur(4px)'
-                      }}
-                    >
-                      {item.categoria}
-                    </span>
-                  </div>
+                  {item.categoria}
+                </span>
 
-                  <div style={{ padding: '0.85rem', flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
-                    <div>
-                      <h4 style={{ fontFamily: 'Georgia, serif', color: 'var(--texto-oscuro)', fontSize: '0.95rem', margin: '0 0 4px 0' }}>
-                        {item.titulo}
-                      </h4>
-                      {item.descripcion && (
-                        <p style={{ fontSize: '0.8rem', color: 'var(--texto-gris)', margin: '0 0 8px 0', lineHeight: 1.3 }}>
-                          {item.descripcion}
-                        </p>
-                      )}
-                    </div>
+                {item.precio > 0 && (
+                  <span
+                    style={{
+                      position: 'absolute',
+                      bottom: '8px',
+                      right: '8px',
+                      backgroundColor: 'rgba(0, 0, 0, 0.75)',
+                      color: '#ffffff',
+                      fontSize: '0.8rem',
+                      fontWeight: 700,
+                      padding: '2px 8px',
+                      borderRadius: '8px'
+                    }}
+                  >
+                    Ref: {formatPrice(item.precio)}
+                  </span>
+                )}
+              </div>
 
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '8px', borderTop: '1px solid var(--rosa-fondo)', paddingTop: '6px' }}>
-                      <small style={{ color: 'var(--texto-gris)', fontSize: '0.7rem' }}>
-                        {formatDate(item.createdAt)}
-                      </small>
-                      <button
-                        type="button"
-                        onClick={() => handleDelete(item._id, item.titulo)}
-                        style={{
-                          background: '#fee2e2',
-                          color: '#dc2626',
-                          border: '1px solid #fca5a5',
-                          padding: '4px 10px',
-                          borderRadius: '8px',
-                          fontSize: '0.75rem',
-                          fontWeight: 'bold',
-                          cursor: 'pointer'
-                        }}
-                        title="Eliminar de la galería"
-                      >
-                        🗑️ Eliminar
-                      </button>
-                    </div>
-                  </div>
+              <div style={{ padding: '0.85rem', flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+                <div>
+                  <h4 style={{ color: 'var(--texto-oscuro)', fontSize: '0.95rem', marginBottom: '0.35rem' }}>
+                    {item.titulo}
+                  </h4>
+                  {item.descripcion && (
+                    <p style={{ color: 'var(--texto-gris)', fontSize: '0.8rem', lineHeight: '1.3', marginBottom: '0.6rem' }}>
+                      {item.descripcion}
+                    </p>
+                  )}
                 </div>
-              );
-            })}
-          </div>
-        )}
-      </div>
+
+                <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem', borderTop: '1px solid var(--rosa-suave)', paddingTop: '0.5rem' }}>
+                  <button
+                    type="button"
+                    onClick={() => handleStartEdit(item)}
+                    className="boton-admin-link"
+                    style={{ flex: 1, justifyContent: 'center', fontSize: '0.8rem', padding: '0.4rem', minHeight: '34px' }}
+                  >
+                    ✏️ Editar
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleDelete(item._id, item.titulo)}
+                    className="boton-admin-logout"
+                    style={{ padding: '0.4rem 0.75rem', minHeight: '34px' }}
+                    title="Eliminar foto"
+                  >
+                    🗑️
+                  </button>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

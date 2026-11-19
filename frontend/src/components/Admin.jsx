@@ -3,7 +3,9 @@ import { Link } from 'react-router-dom';
 import AdminLogin from './admin/AdminLogin';
 import AdminProductForm from './admin/AdminProductForm';
 import AdminProductList from './admin/AdminProductList';
+import AdminBreakfastManager from './admin/AdminBreakfastManager';
 import AdminGalleryManager from './admin/AdminGalleryManager';
+import AdminCakeManager from './admin/AdminCakeManager';
 import {
   getProducts,
   createProduct,
@@ -17,7 +19,7 @@ export default function Admin() {
     return sessionStorage.getItem('hechobygaby_admin_session') === 'authenticated';
   });
 
-  const [activeAdminSection, setActiveAdminSection] = useState('products'); // 'products' o 'gallery'
+  const [activeAdminSection, setActiveAdminSection] = useState('products'); // 'products', 'breakfast', 'gallery', 'cakes'
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -155,7 +157,7 @@ export default function Admin() {
   // SI ESTÁ AUTENTICADO: MOSTRAR PANEL COMPLETO
   // ----------------------------------------------------
   return (
-    <div style={{ maxWidth: '1000px', margin: '0 auto', padding: '2rem 1.25rem' }}>
+    <div style={{ maxWidth: '1080px', margin: '0 auto', padding: '2rem 1.25rem' }}>
       {/* ENCABEZADO DEL PANEL */}
       <div
         style={{
@@ -186,7 +188,7 @@ export default function Admin() {
             </span>
           </div>
           <p style={{ color: 'var(--texto-gris)', fontSize: '0.9rem', marginTop: '0.2rem' }}>
-            Gestión completa de Catálogo de Productos y Galería de Fotos en MongoDB Atlas
+            Gestión completa de Contenidos, Precios y Catálogo persistidos en MongoDB Atlas
           </p>
         </div>
 
@@ -205,30 +207,54 @@ export default function Admin() {
         </div>
       </div>
 
-      {/* PESTAÑAS DE NAVEGACIÓN DENTRO DEL PANEL ADMIN */}
-      <div style={{ display: 'flex', gap: '0.75rem', marginBottom: '1.75rem', borderBottom: '1px solid var(--rosa-borde)', paddingBottom: '0.5rem' }}>
+      {/* PESTAÑAS PRINCIPALES DEL PANEL ADMIN */}
+      <div
+        style={{
+          display: 'flex',
+          gap: '0.5rem',
+          marginBottom: '1.75rem',
+          borderBottom: '1px solid var(--rosa-borde)',
+          paddingBottom: '0.5rem',
+          overflowX: 'auto'
+        }}
+      >
         <button
           type="button"
           onClick={() => setActiveAdminSection('products')}
           className={`pestana ${activeAdminSection === 'products' ? 'activa' : ''}`}
-          style={{ fontSize: '1rem', padding: '0.6rem 1.25rem' }}
+          style={{ fontSize: '0.95rem', padding: '0.6rem 1rem', whiteSpace: 'nowrap' }}
         >
-          📦 Catálogo de Productos
+          📦 Catálogo Principal
+        </button>
+        <button
+          type="button"
+          onClick={() => setActiveAdminSection('breakfast')}
+          className={`pestana ${activeAdminSection === 'breakfast' ? 'activa' : ''}`}
+          style={{ fontSize: '0.95rem', padding: '0.6rem 1rem', whiteSpace: 'nowrap' }}
+        >
+          ☕ Ítems de Desayuno
         </button>
         <button
           type="button"
           onClick={() => setActiveAdminSection('gallery')}
           className={`pestana ${activeAdminSection === 'gallery' ? 'activa' : ''}`}
-          style={{ fontSize: '1rem', padding: '0.6rem 1.25rem' }}
+          style={{ fontSize: '0.95rem', padding: '0.6rem 1rem', whiteSpace: 'nowrap' }}
         >
-          🖼️ Gestión de Galería de Fotos
+          🖼️ Galería de Fotos
+        </button>
+        <button
+          type="button"
+          onClick={() => setActiveAdminSection('cakes')}
+          className={`pestana ${activeAdminSection === 'cakes' ? 'activa' : ''}`}
+          style={{ fontSize: '0.95rem', padding: '0.6rem 1rem', whiteSpace: 'nowrap' }}
+        >
+          🎂 Constructor de Tortas
         </button>
       </div>
 
-      {/* SECCIÓN 1: PRODUCTOS */}
+      {/* SECCIÓN 1: PRODUCTOS GENERALES */}
       {activeAdminSection === 'products' && (
         <div>
-          {/* ALERTAS DE FEEDBACK */}
           {feedback.text && (
             <div
               style={{
@@ -255,7 +281,6 @@ export default function Admin() {
             </div>
           )}
 
-          {/* FORMULARIO DE CREACIÓN / EDICIÓN */}
           <AdminProductForm
             key={editingProduct?._id || 'new'}
             editingProduct={editingProduct}
@@ -264,7 +289,6 @@ export default function Admin() {
             isSubmitting={isSubmitting}
           />
 
-          {/* LISTA PREVIA DE PRODUCTOS CARGADOS */}
           <AdminProductList
             products={products}
             loading={loading}
@@ -276,9 +300,19 @@ export default function Admin() {
         </div>
       )}
 
-      {/* SECCIÓN 2: GESTIÓN DE GALERÍA DE FOTOS */}
+      {/* SECCIÓN 2: ÍTEMS DE DESAYUNO */}
+      {activeAdminSection === 'breakfast' && (
+        <AdminBreakfastManager />
+      )}
+
+      {/* SECCIÓN 3: GESTIÓN DE GALERÍA DE FOTOS */}
       {activeAdminSection === 'gallery' && (
         <AdminGalleryManager />
+      )}
+
+      {/* SECCIÓN 4: CONSTRUCTOR DE TORTAS A MEDIDA */}
+      {activeAdminSection === 'cakes' && (
+        <AdminCakeManager />
       )}
     </div>
   );

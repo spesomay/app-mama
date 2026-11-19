@@ -1,9 +1,9 @@
-import { useState } from 'react';
-import {
-  ITEMS_CREADOR_DESAYUNO,
-  CATEGORIAS_CREADOR_DESAYUNO
-} from '../data/mockData';
+import { useState, useEffect } from 'react';
+import { getBreakfastItems } from '../services/breakfastService';
+import { ITEMS_CREADOR_DESAYUNO } from '../data/mockData';
 import { formatPrice } from '../utils/formatters';
+
+const CATEGORIAS_DESAYUNO = ['Todos', 'Dulces', 'Salados', 'Infusiones', 'Mini Tortas', 'Detalles'];
 
 export default function ArmaTuDesayuno({ onAddToCart }) {
   // Cantidades de cada ítem: { [itemId]: number }
@@ -11,6 +11,44 @@ export default function ArmaTuDesayuno({ onAddToCart }) {
   const [categoriaActiva, setCategoriaActiva] = useState('Todos');
   const [dedicatoria, setDedicatoria] = useState('');
   const [addedSuccess, setAddedSuccess] = useState(false);
+  const [items, setItems] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  // Cargar ítems disponibles desde MongoDB Atlas
+  useEffect(() => {
+    let isMounted = true;
+    getBreakfastItems({ disponible: true })
+      .then((data) => {
+        if (!isMounted) return;
+        if (Array.isArray(data) && data.length > 0) {
+          const normalizados = data.map((item) => ({
+            id: item._id,
+            nombre: item.nombre,
+            categoria: item.subcategoria || 'Dulces',
+            precio: item.precio,
+            emoji: item.emoji || '🧁',
+            desc: item.descripcion || '',
+            imagen: item.imagen || ''
+          }));
+          setItems(normalizados);
+        } else {
+          // Fallback a los datos de respaldo si no hay datos
+          setItems(ITEMS_CREADOR_DESAYUNO);
+        }
+        setLoading(false);
+      })
+      .catch((err) => {
+        console.warn('Cargando respaldo local para desayunos:', err.message);
+        if (isMounted) {
+          setItems(ITEMS_CREADOR_DESAYUNO);
+          setLoading(false);
+        }
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   // Manejo de cantidades libre (+ y -)
   const updateQuantity = (id, delta) => {
@@ -42,7 +80,7 @@ export default function ArmaTuDesayuno({ onAddToCart }) {
   // Ítems actualmente seleccionados con cantidad > 0
   const selectedItems = Object.entries(quantities)
     .map(([id, qty]) => {
-      const item = ITEMS_CREADOR_DESAYUNO.find((i) => i.id === id);
+      const item = items.find((i) => i.id === id);
       return item ? { ...item, cantidad: qty } : null;
     })
     .filter(Boolean);
@@ -51,7 +89,7 @@ export default function ArmaTuDesayuno({ onAddToCart }) {
   const totalPrice = selectedItems.reduce((acc, i) => acc + i.precio * i.cantidad, 0);
 
   // Filtrado de ítems por categoría
-  const displayedItems = ITEMS_CREADOR_DESAYUNO.filter(
+  const displayedItems = items.filter(
     (item) => categoriaActiva === 'Todos' || item.categoria === categoriaActiva
   );
 
@@ -115,7 +153,7 @@ export default function ArmaTuDesayuno({ onAddToCart }) {
               alignItems: 'center'
             }}
           >
-            {CATEGORIAS_CREADOR_DESAYUNO.map((cat) => (
+            {CATEGORIAS_DESAYUNO.map((cat) => (
               <button
                 key={cat}
                 type="button"
@@ -132,9 +170,10 @@ export default function ArmaTuDesayuno({ onAddToCart }) {
                   transition: 'all 0.15s ease'
                 }}
               >
-                {cat === 'Bebidas' && '☕ '}
+                {cat === 'Infusiones' && '☕ '}
                 {cat === 'Dulces' && '🥐 '}
                 {cat === 'Salados' && '🥪 '}
+                {cat === 'Mini Tortas' && '🧁 '}
                 {cat === 'Detalles' && '✨ '}
                 {cat}
               </button>
@@ -142,111 +181,119 @@ export default function ArmaTuDesayuno({ onAddToCart }) {
           </div>
 
           {/* GRILLA DE PRODUCTOS DISPONIBLES */}
-          <div
-            style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))',
-              gap: '1rem'
-            }}
-          >
-            {displayedItems.map((item) => {
-              const qty = quantities[item.id] || 0;
-              const isSelected = qty > 0;
+          {loading ? (
+            <div style={{ textAlign: 'center', padding: '3rem', color: 'var(--texto-gris)' }}>
+              Cargando opciones deliciosas de desayuno...
+            </div>
+          ) : displayedItems.length === 0 ? (
+            <div style={{ textAlign: 'center', padding: '3rem', backgroundColor: 'var(--blanco-card)', borderRadius: '16px', border: '1px dashed var(--rosa-borde)' }}>
+              <p style={{ color: 'var(--texto-gris)' }}>No hay productos en esta categoría por el momento.</p>
+            </div>
+          ) : (
+            <div
+              style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))',
+                gap: '1rem'
+              }}
+            >
+              {displayedItems.map((item) => {
+                const qty = quantities[item.id] || 0;
+                const isSelected = qty > 0;
 
-              return (
-                <div
-                  key={item.id}
-                  style={{
-                    background: 'var(--blanco-card)',
-                    border: isSelected ? '2px solid var(--rosa-principal)' : '1px solid var(--rosa-borde)',
-                    backgroundColor: isSelected ? 'var(--rosa-suave)' : 'var(--blanco-card)',
-                    borderRadius: '16px',
-                    padding: '1.15rem',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    justifyContent: 'space-between',
-                    boxShadow: 'var(--sombra-card)',
-                    transition: 'all 0.2s ease',
-                    position: 'relative'
-                  }}
-                >
-                  {/* Encabezado de la tarjeta */}
-                  <div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '6px' }}>
-                      <span style={{ fontSize: '2.5rem', lineHeight: 1 }}>{item.emoji}</span>
-                      <span
-                        style={{
-                          fontSize: '0.7rem',
-                          background: isSelected ? 'var(--rosa-principal)' : 'var(--rosa-fondo)',
-                          color: isSelected ? 'white' : 'var(--texto-gris)',
-                          padding: '2px 8px',
-                          borderRadius: '10px',
-                          fontWeight: 'bold'
-                        }}
-                      >
-                        {item.categoria}
-                      </span>
-                    </div>
-
-                    <strong style={{ fontSize: '0.95rem', color: 'var(--texto-oscuro)', display: 'block', marginBottom: '4px' }}>
-                      {item.nombre}
-                    </strong>
-
-                    {item.desc && (
-                      <p style={{ fontSize: '0.8rem', color: 'var(--texto-gris)', margin: '0 0 10px 0', lineHeight: 1.3 }}>
-                        {item.desc}
-                      </p>
-                    )}
-                  </div>
-
-                  {/* Precio y Controles de Cantidad */}
+                return (
                   <div
+                    key={item.id}
                     style={{
+                      background: 'var(--blanco-card)',
+                      border: isSelected ? '2px solid var(--rosa-principal)' : '1px solid var(--rosa-borde)',
+                      backgroundColor: isSelected ? 'var(--rosa-suave)' : 'var(--blanco-card)',
+                      borderRadius: '16px',
+                      padding: '1.15rem',
                       display: 'flex',
+                      flexDirection: 'column',
                       justifyContent: 'space-between',
-                      alignItems: 'center',
-                      marginTop: '0.75rem',
-                      borderTop: '1px solid var(--rosa-borde)',
-                      paddingTop: '0.65rem'
+                      boxShadow: 'var(--sombra-card)',
+                      transition: 'all 0.2s ease',
+                      position: 'relative'
                     }}
                   >
                     <div>
-                      <span style={{ fontSize: '0.75rem', color: 'var(--texto-gris)', display: 'block' }}>Precio unitario:</span>
-                      <strong style={{ fontSize: '1rem', color: 'var(--rosa-principal)' }}>
-                        {item.precio > 0 ? formatPrice(item.precio) : 'Gratis'}
+                      {item.imagen ? (
+                        <div style={{ position: 'relative', width: '100%', height: '110px', marginBottom: '8px', borderRadius: '10px', overflow: 'hidden' }}>
+                          <img
+                            src={item.imagen}
+                            alt={item.nombre}
+                            style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                            onError={(e) => { e.currentTarget.style.display = 'none'; }}
+                          />
+                          <span
+                            style={{
+                              position: 'absolute',
+                              top: '6px',
+                              right: '6px',
+                              fontSize: '0.65rem',
+                              background: isSelected ? 'var(--rosa-principal)' : 'rgba(255, 255, 255, 0.9)',
+                              color: isSelected ? 'white' : 'var(--texto-oscuro)',
+                              padding: '2px 6px',
+                              borderRadius: '8px',
+                              fontWeight: 'bold'
+                            }}
+                          >
+                            {item.categoria}
+                          </span>
+                        </div>
+                      ) : (
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '6px' }}>
+                          <span style={{ fontSize: '2.5rem', lineHeight: 1 }}>{item.emoji}</span>
+                          <span
+                            style={{
+                              fontSize: '0.7rem',
+                              background: isSelected ? 'var(--rosa-principal)' : 'var(--rosa-fondo)',
+                              color: isSelected ? 'white' : 'var(--texto-gris)',
+                              padding: '2px 8px',
+                              borderRadius: '10px',
+                              fontWeight: 'bold'
+                            }}
+                          >
+                            {item.categoria}
+                          </span>
+                        </div>
+                      )}
+
+                      <strong style={{ fontSize: '0.95rem', color: 'var(--texto-oscuro)', display: 'block', marginBottom: '4px' }}>
+                        {item.nombre}
                       </strong>
+
+                      {item.desc && (
+                        <p style={{ fontSize: '0.8rem', color: 'var(--texto-gris)', margin: '0 0 10px 0', lineHeight: 1.3 }}>
+                          {item.desc}
+                        </p>
+                      )}
                     </div>
 
-                    {qty === 0 ? (
-                      <button
-                        type="button"
-                        onClick={() => updateQuantity(item.id, 1)}
-                        className="btn-sumar-restar"
-                        style={{
-                          width: 'auto',
-                          padding: '0.35rem 0.85rem',
-                          borderRadius: '12px',
-                          fontSize: '0.8rem',
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '4px'
-                        }}
-                      >
-                        + Agregar
-                      </button>
-                    ) : (
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '10px' }}>
+                      <span style={{ fontWeight: 'bold', fontSize: '1rem', color: 'var(--rosa-principal)' }}>
+                        {formatPrice(item.precio)}
+                      </span>
+
+                      {/* Controles de Cantidad (+ / -) */}
                       <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                        <button
-                          type="button"
-                          onClick={() => updateQuantity(item.id, -1)}
-                          className="btn-sumar-restar"
-                          title="Restar una unidad"
-                        >
-                          -
-                        </button>
-                        <span style={{ fontWeight: '800', fontSize: '1rem', minWidth: '20px', textAlign: 'center' }}>
-                          {qty}
-                        </span>
+                        {qty > 0 && (
+                          <>
+                            <button
+                              type="button"
+                              onClick={() => updateQuantity(item.id, -1)}
+                              className="btn-sumar-restar"
+                              title="Restar una unidad"
+                            >
+                              -
+                            </button>
+                            <span style={{ fontWeight: 'bold', minWidth: '20px', textAlign: 'center', fontSize: '0.95rem', color: 'var(--texto-oscuro)' }}>
+                              {qty}
+                            </span>
+                          </>
+                        )}
                         <button
                           type="button"
                           onClick={() => updateQuantity(item.id, 1)}
@@ -256,54 +303,64 @@ export default function ArmaTuDesayuno({ onAddToCart }) {
                           +
                         </button>
                       </div>
-                    )}
+                    </div>
                   </div>
-                </div>
-              );
-            })}
-          </div>
+                );
+              })}
+            </div>
+          )}
         </div>
 
-        {/* COLUMNA DERECHA: VISTA PREVIA Y PRESUPUESTO EN TIEMPO REAL */}
-        <div>
-          <div className="tarjeta-resumen-fija">
-            <div className="encabezado-resumen">
-              <h3 className="titulo-resumen">Vista Previa del Desayuno</h3>
-              <span className="badge-etiqueta">
-                {totalItemsCount} {totalItemsCount === 1 ? 'ítem' : 'ítems'}
-              </span>
+        {/* COLUMNA DERECHA: RESUMEN Y PRESUPUESTO EN TIEMPO REAL */}
+        <div className="columna-resumen">
+          <div
+            className="resumen-card-torta"
+            style={{
+              position: 'sticky',
+              top: '90px',
+              background: 'var(--blanco-card)',
+              border: '1.5px solid var(--rosa-borde)',
+              borderRadius: '20px',
+              padding: '1.5rem',
+              boxShadow: 'var(--sombra-card)'
+            }}
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+              <h3 style={{ margin: 0, fontSize: '1.2rem', color: 'var(--texto-oscuro)', fontFamily: 'Georgia, serif' }}>
+                Tu Desayuno
+              </h3>
+              {selectedItems.length > 0 && (
+                <button
+                  type="button"
+                  onClick={clearAll}
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    color: '#b91c1c',
+                    fontSize: '0.8rem',
+                    cursor: 'pointer',
+                    textDecoration: 'underline'
+                  }}
+                >
+                  Vaciar
+                </button>
+              )}
             </div>
 
-            {/* Ilustración amigable */}
-            <div
-              className="caja-ilustracion-torta"
-              style={{
-                height: '110px',
-                background: 'var(--rosa-fondo)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                flexDirection: 'column',
-                gap: '4px'
-              }}
-            >
-              <span style={{ fontSize: '2.5rem' }}>☕ 🥐 🍓</span>
-              <small style={{ color: 'var(--texto-gris)', fontSize: '0.75rem', fontWeight: 'bold' }}>
-                Tu desayuno personalizado
-              </small>
-            </div>
-
-            {/* Lista detallada de ítems elegidos */}
-            <div style={{ margin: '1rem 0', maxHeight: '280px', overflowY: 'auto' }}>
+            {/* Listado de ítems seleccionados */}
+            <div style={{ maxHeight: '280px', overflowY: 'auto', marginBottom: '1rem', paddingRight: '4px' }}>
               {selectedItems.length === 0 ? (
-                <div style={{ textAlign: 'center', padding: '1.5rem 0', color: 'var(--texto-gris)' }}>
-                  <p style={{ fontSize: '0.9rem', marginBottom: '4px' }}>Tu desayuno está vacío.</p>
-                  <small style={{ fontSize: '0.8rem' }}>
-                    Tocá <strong>+ Agregar</strong> en medialunas, bebidas o lo que prefieras para armar tu pedido.
-                  </small>
+                <div style={{ textAlign: 'center', padding: '1.75rem 0.5rem', color: 'var(--texto-gris)' }}>
+                  <div style={{ fontSize: '2.5rem', marginBottom: '8px' }}>🧺</div>
+                  <p style={{ margin: 0, fontSize: '0.9rem' }}>
+                    Todavía no sumaste ningún producto.
+                  </p>
+                  <span style={{ fontSize: '0.8rem', color: 'var(--texto-gris)' }}>
+                    Pulsá el botón <strong>+</strong> en lo que quieras agregar.
+                  </span>
                 </div>
               ) : (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                   {selectedItems.map((item) => (
                     <div
                       key={item.id}
@@ -311,31 +368,36 @@ export default function ArmaTuDesayuno({ onAddToCart }) {
                         display: 'flex',
                         justifyContent: 'space-between',
                         alignItems: 'center',
-                        fontSize: '0.85rem',
-                        padding: '4px 0',
-                        borderBottom: '1px dashed var(--rosa-borde)'
+                        background: 'var(--rosa-fondo)',
+                        padding: '6px 10px',
+                        borderRadius: '10px',
+                        fontSize: '0.85rem'
                       }}
                     >
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flex: 1, paddingRight: '6px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px', minWidth: 0 }}>
                         <span>{item.emoji}</span>
-                        <div>
+                        <div style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                           <strong style={{ color: 'var(--texto-oscuro)' }}>{item.nombre}</strong>
-                          <span style={{ color: 'var(--texto-gris)', fontSize: '0.75rem', marginLeft: '4px' }}>
-                            (x{item.cantidad})
-                          </span>
+                          <span style={{ color: 'var(--texto-gris)', marginLeft: '4px' }}>x{item.cantidad}</span>
                         </div>
                       </div>
 
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}>
                         <span style={{ fontWeight: 'bold', color: 'var(--rosa-principal)' }}>
                           {formatPrice(item.precio * item.cantidad)}
                         </span>
                         <button
                           type="button"
                           onClick={() => removeItem(item.id)}
-                          className="btn-eliminar-item"
-                          title="Quitar del desayuno"
-                          style={{ padding: '0 4px', fontSize: '0.85rem' }}
+                          style={{
+                            background: 'none',
+                            border: 'none',
+                            color: 'var(--texto-gris)',
+                            cursor: 'pointer',
+                            fontSize: '0.85rem',
+                            padding: '2px 4px'
+                          }}
+                          title="Quitar"
                         >
                           ✕
                         </button>
@@ -346,86 +408,83 @@ export default function ArmaTuDesayuno({ onAddToCart }) {
               )}
             </div>
 
-            {/* Dedicatoria personalizada */}
-            <div className="campo-grupo" style={{ marginTop: '0.5rem' }}>
-              <label style={{ fontSize: '0.8rem', fontWeight: 'bold' }}>
-                💌 Dedicatoria para la tarjeta (opcional):
+            {/* Campo opcional de dedicatoria */}
+            <div style={{ marginBottom: '1rem' }}>
+              <label style={{ fontSize: '0.82rem', fontWeight: 'bold', color: 'var(--texto-oscuro)', display: 'block', marginBottom: '4px' }}>
+                💌 Mensaje o dedicatoria (Opcional):
               </label>
-              <input
-                type="text"
-                placeholder="Ej: ¡Feliz cumple mamá, te amamos!"
+              <textarea
                 value={dedicatoria}
                 onChange={(e) => setDedicatoria(e.target.value)}
-                className="campo-texto"
-                style={{ fontSize: '0.85rem', padding: '0.5rem 0.75rem' }}
+                placeholder="Ej. ¡Muy feliz cumple mamá! Te queremos mucho..."
+                className="input-formulario"
+                rows="2"
+                style={{ fontSize: '0.82rem', resize: 'vertical' }}
               />
             </div>
 
-            {/* TOTAL DINÁMICO */}
-            <div className="bloque-total-est" style={{ marginTop: '1rem', paddingTop: '0.75rem' }}>
+            {/* Presupuesto Total */}
+            <div
+              style={{
+                borderTop: '2px dashed var(--rosa-borde)',
+                paddingTop: '0.85rem',
+                marginBottom: '1.25rem',
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'baseline'
+              }}
+            >
               <div>
-                <span className="label-total" style={{ display: 'block' }}>Total del Desayuno:</span>
-                <small style={{ color: 'var(--texto-gris)', fontSize: '0.75rem' }}>
-                  {totalItemsCount} {totalItemsCount === 1 ? 'producto incluido' : 'productos incluidos'}
-                </small>
+                <span style={{ fontSize: '0.85rem', color: 'var(--texto-gris)', display: 'block' }}>
+                  Total ({totalItemsCount} {totalItemsCount === 1 ? 'ítem' : 'ítems'}):
+                </span>
+                <span style={{ fontSize: '1.5rem', fontWeight: 800, color: 'var(--rosa-principal)' }}>
+                  {formatPrice(totalPrice)}
+                </span>
               </div>
-              <span className="monto-total">{formatPrice(totalPrice)}</span>
             </div>
 
-            {/* BOTÓN DE AGREGAR AL CARRITO */}
+            {/* Botón de Agregar al Carrito */}
             <button
+              type="button"
               onClick={handleAgregarAlPedido}
               disabled={selectedItems.length === 0}
               className="boton-confirmar"
               style={{
                 width: '100%',
-                marginTop: '1rem',
-                opacity: selectedItems.length === 0 ? 0.6 : 1,
-                cursor: selectedItems.length === 0 ? 'not-allowed' : 'pointer'
+                opacity: selectedItems.length === 0 ? 0.5 : 1,
+                cursor: selectedItems.length === 0 ? 'not-allowed' : 'pointer',
+                padding: '0.85rem 1rem',
+                fontSize: '0.95rem'
               }}
-              type="button"
             >
-              🛒 Agregar Desayuno al Pedido ({formatPrice(totalPrice)})
+              {addedSuccess ? '¡Agregado al Carrito! ✓' : '🛒 Agregar Desayuno al Pedido'}
             </button>
-
-            {selectedItems.length > 0 && (
-              <button
-                type="button"
-                onClick={clearAll}
-                className="btn-eliminar-item"
-                style={{
-                  width: '100%',
-                  marginTop: '0.5rem',
-                  fontSize: '0.75rem',
-                  color: 'var(--texto-gris)',
-                  textAlign: 'center',
-                  background: 'none'
-                }}
-              >
-                Limpiar selección
-              </button>
-            )}
-
-            {addedSuccess && (
-              <p
-                style={{
-                  textAlign: 'center',
-                  color: '#15803d',
-                  background: '#dcfce7',
-                  border: '1px solid #86efac',
-                  padding: '0.5rem',
-                  borderRadius: '10px',
-                  fontWeight: 'bold',
-                  fontSize: '0.85rem',
-                  marginTop: '0.75rem'
-                }}
-              >
-                ✅ ¡Desayuno agregado al carrito con éxito!
-              </p>
-            )}
           </div>
         </div>
       </div>
+
+      {/* BARRA FLOTANTE MOBILE PARA COMPLETAR COMPRA */}
+      {selectedItems.length > 0 && (
+        <div className="barra-flotante-mobile-desayuno">
+          <div>
+            <span style={{ fontSize: '0.75rem', color: 'var(--texto-gris)', display: 'block' }}>
+              Desayuno ({totalItemsCount} {totalItemsCount === 1 ? 'prod.' : 'prods.'})
+            </span>
+            <strong style={{ fontSize: '1.15rem', color: 'var(--rosa-principal)' }}>
+              {formatPrice(totalPrice)}
+            </strong>
+          </div>
+          <button
+            type="button"
+            onClick={handleAgregarAlPedido}
+            className="boton-confirmar"
+            style={{ width: 'auto', padding: '0.65rem 1.25rem', fontSize: '0.9rem' }}
+          >
+            {addedSuccess ? '¡Agregado! ✓' : 'Agregar 🛒'}
+          </button>
+        </div>
+      )}
     </div>
   );
 }

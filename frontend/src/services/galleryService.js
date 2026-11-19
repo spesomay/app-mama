@@ -25,6 +25,16 @@ export async function createGalleryItem(galleryData) {
 }
 
 /**
+ * Actualizar una foto de la galería por ID (permite editar título, descripción, categoría, precio o foto)
+ */
+export async function updateGalleryItem(id, galleryData) {
+  const isFormData = galleryData instanceof FormData;
+  const config = isFormData ? { headers: { 'Content-Type': 'multipart/form-data' } } : {};
+  const response = await api.put(`/gallery/${id}`, galleryData, config);
+  return response.data;
+}
+
+/**
  * Eliminar una foto de la galería por ID
  */
 export async function deleteGalleryItem(id) {

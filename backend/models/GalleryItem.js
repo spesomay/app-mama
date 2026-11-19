@@ -21,10 +21,15 @@ const galleryItemSchema = new mongoose.Schema({
   categoria: {
     type: String,
     enum: {
-      values: ['Tortas', 'Tartas', 'Desayunos', 'Eventos', 'Varios'],
-      message: 'Categoría no válida. Debe ser Tortas, Tartas, Desayunos, Eventos o Varios'
+      values: ['Tortas', 'Tartas', 'Cajas de Desayuno', 'Mesa Dulce', 'Desayunos', 'Eventos', 'Varios'],
+      message: 'Categoría no válida. Debe ser Tortas, Tartas, Cajas de Desayuno, Mesa Dulce, Desayunos, Eventos o Varios'
     },
     default: 'Tortas'
+  },
+  precio: {
+    type: Number,
+    default: 0,
+    min: [0, 'El precio de referencia no puede ser negativo']
   },
   orden: {
     type: Number,

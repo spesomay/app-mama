@@ -15,6 +15,7 @@ import {
 import { formatPrice } from '../utils/formatters.js';
 import { getProductImageUrl } from '../services/productService.js';
 import { getGalleryItems } from '../services/galleryService.js';
+import { getCakeOptions } from '../services/cakeService.js';
 import { playCartSound } from '../utils/sound.js';
 import ArmaTuDesayuno from './ArmaTuDesayuno.jsx';
 
@@ -41,12 +42,23 @@ export default function Home({ activeTab, setActiveTab, cart, setCart, triggerCa
     notas: ''
   });
 
+  // Filtro de la Galería pública
+  const [categoriaGaleria, setCategoriaGaleria] = useState('Todos');
+
+  // Opciones dinámicas para el configurador de Tortas a Medida (cargadas desde MongoDB)
+  const [cakeOptions, setCakeOptions] = useState({
+    tamanos: TAMANOS_TORTA.map((t, idx) => ({ _id: `tam_${idx}`, nombre: t.nombre, precio: t.extra || 14000, maxRellenos: idx === 0 ? 1 : 2 })),
+    estilos: ESTILOS_TORTA.map((e, idx) => ({ _id: `est_${idx}`, nombre: e.nombre, precio: e.precio, descripcion: e.desc })),
+    bizcochuelos: BIZCOCHUELOS_TORTA.map((b, idx) => ({ _id: `biz_${idx}`, nombre: b.nombre, precio: b.extra })),
+    rellenos: RELLENOS_TORTA.map((r, idx) => ({ _id: `rel_${idx}`, nombre: r.nombre, precio: r.extra }))
+  });
+
   // Estado del configurador de Tortas a Medida
   const [customCake, setCustomCake] = useState({
-    estilo: ESTILOS_TORTA[0],
-    tamano: TAMANOS_TORTA[0],
-    bizcochuelo: BIZCOCHUELOS_TORTA[0],
-    rellenos: [RELLENOS_TORTA[0]],
+    estilo: { nombre: 'Drip Cake', precio: 3000 },
+    tamano: { nombre: 'Chica (8 - 10 porciones)', precio: 14000, maxRellenos: 1 },
+    bizcochuelo: { nombre: 'Vainilla Tradicional Húmedo', precio: 0 },
+    rellenos: [{ nombre: 'Dulce de Leche Clásico Artesanal', precio: 0 }],
     mensaje: ''
   });
 
@@ -57,7 +69,7 @@ export default function Home({ activeTab, setActiveTab, cart, setCart, triggerCa
     crema: CREMAS_TARTAS[0]
   });
 
-  // Carga de productos y galería desde el backend con fallback
+  // Carga de productos, galería y opciones de tortas desde el backend
   useEffect(() => {
     let isMounted = true;
     axios.get(`${API_BASE}/products`)
@@ -82,6 +94,39 @@ export default function Home({ activeTab, setActiveTab, cart, setCart, triggerCa
       })
       .catch((err) => {
         console.warn('No se pudo conectar a la galería de MongoDB:', err.message);
+      });
+
+    getCakeOptions()
+      .then((data) => {
+        if (!isMounted) return;
+        if (data && data.tamanos && data.tamanos.length > 0) {
+          const optActivas = {
+            tamanos: data.tamanos.filter((t) => t.disponible),
+            estilos: data.estilos.filter((e) => e.disponible),
+            bizcochuelos: data.bizcochuelos.filter((b) => b.disponible),
+            rellenos: data.rellenos.filter((r) => r.disponible)
+          };
+          setCakeOptions(optActivas);
+
+          setCustomCake((prev) => {
+            const primerTam = optActivas.tamanos[0] || prev.tamano;
+            const primerEst = optActivas.estilos[0] || prev.estilo;
+            const primerBiz = optActivas.bizcochuelos[0] || prev.bizcochuelo;
+            const maxRel = primerTam?.maxRellenos || 1;
+            const primerRel = optActivas.rellenos.slice(0, maxRel);
+
+            return {
+              ...prev,
+              tamano: primerTam,
+              estilo: primerEst,
+              bizcochuelo: primerBiz,
+              rellenos: primerRel.length > 0 ? primerRel : prev.rellenos
+            };
+          });
+        }
+      })
+      .catch((err) => {
+        console.warn('Usando opciones locales de respaldo para tortas:', err.message);
       });
 
     return () => {
@@ -151,13 +196,53 @@ export default function Home({ activeTab, setActiveTab, cart, setCart, triggerCa
 
   // Cálculos dinámicos de precios
   const precioTortaActual =
-    customCake.estilo.precio +
-    (customCake.tamano.extra || 0) +
-    (customCake.bizcochuelo.extra || 0) +
-    customCake.rellenos.reduce((acc, r) => acc + (r.extra || 0), 0);
+    (customCake.tamano?.precio || 0) +
+    (customCake.estilo?.precio || 0) +
+    (customCake.bizcochuelo?.precio || 0) +
+    customCake.rellenos.reduce((acc, r) => acc + (r.precio || 0), 0);
 
   const precioTartaActual =
     customTarta.sabor.precio + (customTarta.tamano.extra || 0);
+
+  // Regla dinámica de rellenos según el tamaño elegido
+  const maxRellenosPermitidos = customCake.tamano?.maxRellenos || 1;
+
+  const handleSelectTamano = (nuevoTamano) => {
+    setCustomCake((prev) => {
+      const maxPermitido = nuevoTamano.maxRellenos || 1;
+      const rellenosAjustados = prev.rellenos.slice(0, maxPermitido);
+      return {
+        ...prev,
+        tamano: nuevoTamano,
+        rellenos: rellenosAjustados
+      };
+    });
+  };
+
+  const toggleRelleno = (relleno) => {
+    setCustomCake((prev) => {
+      const existe = prev.rellenos.some(
+        (r) => (r._id && r._id === relleno._id) || r.nombre === relleno.nombre
+      );
+      if (existe) {
+        return {
+          ...prev,
+          rellenos: prev.rellenos.filter(
+            (r) => (r._id && r._id !== relleno._id) || r.nombre !== relleno.nombre
+          )
+        };
+      }
+      const max = prev.tamano?.maxRellenos || 1;
+      if (max === 1) {
+        // Si el tamaño solo admite 1, reemplazamos directamente
+        return { ...prev, rellenos: [relleno] };
+      }
+      if (prev.rellenos.length < max) {
+        return { ...prev, rellenos: [...prev.rellenos, relleno] };
+      }
+      return prev;
+    });
+  };
 
   // Generación y envío del pedido por WhatsApp
   const sendWhatsApp = () => {
@@ -181,21 +266,6 @@ export default function Home({ activeTab, setActiveTab, cart, setCart, triggerCa
 
     const whatsappUrl = `https://wa.me/${WHATSAPP_NUMERO}?text=${encodeURIComponent(mensaje)}`;
     window.open(whatsappUrl, '_blank');
-  };
-
-  // Manejo de rellenos (hasta 3)
-  const toggleRelleno = (relleno) => {
-    setCustomCake((prev) => {
-      const existe = prev.rellenos.some((r) => r.nombre === relleno.nombre);
-      if (existe) {
-        return { ...prev, rellenos: prev.rellenos.filter((r) => r.nombre !== relleno.nombre) };
-      }
-      if (prev.rellenos.length < 3) {
-        return { ...prev, rellenos: [...prev.rellenos, relleno] };
-      }
-      alert('Podés seleccionar hasta un máximo de 3 rellenos');
-      return prev;
-    });
   };
 
   const agregarTortaPersonalizada = () => {
@@ -398,14 +468,21 @@ export default function Home({ activeTab, setActiveTab, cart, setCart, triggerCa
                         <h3>Elegí el Estilo / Cobertura:</h3>
                       </div>
                       <div className="grilla-opciones">
-                        {ESTILOS_TORTA.map((item) => (
+                        {cakeOptions.estilos.map((item) => (
                           <div
-                            key={item.nombre}
+                            key={item._id || item.nombre}
                             onClick={() => setCustomCake({ ...customCake, estilo: item })}
-                            className={`tarjeta-opcion ${customCake.estilo.nombre === item.nombre ? 'seleccionada' : ''}`}
+                            className={`tarjeta-opcion ${customCake.estilo?.nombre === item.nombre ? 'seleccionada' : ''}`}
                           >
                             <strong className="nombre-opcion">{item.nombre}</strong>
-                            <span className="precio-opcion">Desde {formatPrice(item.precio)}</span>
+                            <span className="precio-opcion">
+                              {item.precio > 0 ? `+${formatPrice(item.precio)}` : 'Incluido'}
+                            </span>
+                            {item.descripcion && (
+                              <p style={{ fontSize: '0.75rem', color: 'var(--texto-gris)', marginTop: '4px' }}>
+                                {item.descripcion}
+                              </p>
+                            )}
                           </div>
                         ))}
                       </div>
@@ -417,14 +494,30 @@ export default function Home({ activeTab, setActiveTab, cart, setCart, triggerCa
                         <h3>Tamaño (Porciones):</h3>
                       </div>
                       <div className="grilla-opciones">
-                        {TAMANOS_TORTA.map((t) => (
+                        {cakeOptions.tamanos.map((t) => (
                           <div
-                            key={t.nombre}
-                            onClick={() => setCustomCake({ ...customCake, tamano: t })}
-                            className={`tarjeta-opcion ${customCake.tamano.nombre === t.nombre ? 'seleccionada' : ''}`}
+                            key={t._id || t.nombre}
+                            onClick={() => handleSelectTamano(t)}
+                            className={`tarjeta-opcion ${customCake.tamano?.nombre === t.nombre ? 'seleccionada' : ''}`}
                           >
                             <strong className="nombre-opcion">{t.nombre}</strong>
-                            {t.extra > 0 && <span className="precio-opcion">+{formatPrice(t.extra)}</span>}
+                            <span className="precio-opcion" style={{ color: 'var(--rosa-principal)' }}>
+                              Base: {formatPrice(t.precio)}
+                            </span>
+                            <span
+                              style={{
+                                display: 'inline-block',
+                                fontSize: '0.72rem',
+                                background: customCake.tamano?.nombre === t.nombre ? 'var(--rosa-principal)' : 'var(--rosa-suave)',
+                                color: customCake.tamano?.nombre === t.nombre ? '#ffffff' : 'var(--rosa-principal)',
+                                padding: '2px 7px',
+                                borderRadius: '8px',
+                                fontWeight: 700,
+                                marginTop: '4px'
+                              }}
+                            >
+                              ⚡ Admite hasta {t.maxRellenos || 1} {t.maxRellenos === 1 ? 'relleno' : 'rellenos'}
+                            </span>
                           </div>
                         ))}
                       </div>
@@ -436,14 +529,16 @@ export default function Home({ activeTab, setActiveTab, cart, setCart, triggerCa
                         <h3>Sabor del Bizcochuelo:</h3>
                       </div>
                       <div className="grilla-opciones">
-                        {BIZCOCHUELOS_TORTA.map((biz) => (
+                        {cakeOptions.bizcochuelos.map((biz) => (
                           <div
-                            key={biz.nombre}
+                            key={biz._id || biz.nombre}
                             onClick={() => setCustomCake({ ...customCake, bizcochuelo: biz })}
-                            className={`tarjeta-opcion ${customCake.bizcochuelo.nombre === biz.nombre ? 'seleccionada' : ''}`}
+                            className={`tarjeta-opcion ${customCake.bizcochuelo?.nombre === biz.nombre ? 'seleccionada' : ''}`}
                           >
                             <strong className="nombre-opcion">{biz.nombre}</strong>
-                            {biz.extra > 0 && <span className="precio-opcion">+{formatPrice(biz.extra)}</span>}
+                            <span className="precio-opcion">
+                              {biz.precio > 0 ? `+${formatPrice(biz.precio)}` : 'Sin cargo'}
+                            </span>
                           </div>
                         ))}
                       </div>
@@ -455,19 +550,32 @@ export default function Home({ activeTab, setActiveTab, cart, setCart, triggerCa
                           <span className="numero-paso">4</span>
                           <h3>Rellenos Favoritos:</h3>
                         </div>
-                        <span className="badge-etiqueta">{customCake.rellenos.length}/3 seleccionados</span>
+                        <span className="badge-etiqueta" style={{ fontWeight: 700 }}>
+                          {customCake.rellenos.length} / {maxRellenosPermitidos} seleccionados
+                        </span>
+                      </div>
+                      <div style={{ margin: '0 0 10px 0', fontSize: '0.82rem', color: 'var(--texto-gris)' }}>
+                        ⚡ Para el tamaño <strong>{customCake.tamano?.nombre}</strong> podés elegir hasta <strong>{maxRellenosPermitidos} {maxRellenosPermitidos === 1 ? 'relleno' : 'rellenos'}</strong>.
                       </div>
                       <div className="grilla-opciones">
-                        {RELLENOS_TORTA.map((r) => {
-                          const active = customCake.rellenos.some((item) => item.nombre === r.nombre);
+                        {cakeOptions.rellenos.map((r) => {
+                          const active = customCake.rellenos.some((item) => (item._id && item._id === r._id) || item.nombre === r.nombre);
+                          const reachesLimit = customCake.rellenos.length >= maxRellenosPermitidos && maxRellenosPermitidos > 1 && !active;
                           return (
                             <div
-                              key={r.nombre}
+                              key={r._id || r.nombre}
                               onClick={() => toggleRelleno(r)}
                               className={`tarjeta-opcion ${active ? 'seleccionada' : ''}`}
+                              style={{
+                                opacity: reachesLimit ? 0.5 : 1,
+                                cursor: reachesLimit ? 'not-allowed' : 'pointer'
+                              }}
+                              title={reachesLimit ? `Límite alcanzado (${maxRellenosPermitidos} rellenos)` : ''}
                             >
                               <strong className="nombre-opcion">{r.nombre} {active && '✓'}</strong>
-                              {r.extra > 0 && <span className="precio-opcion">+{formatPrice(r.extra)}</span>}
+                              <span className="precio-opcion">
+                                {r.precio > 0 ? `+${formatPrice(r.precio)}` : 'Sin cargo'}
+                              </span>
                             </div>
                           );
                         })}
@@ -771,62 +879,160 @@ export default function Home({ activeTab, setActiveTab, cart, setCart, triggerCa
                   <p>Mirá algunas de las creaciones que preparamos con mucho amor para nuestros clientes.</p>
                 </div>
 
-                <div className="grilla-galeria">
-                  {(dbGallery.length > 0 ? dbGallery : GALERIA_TRABAJOS).map((trabajo) => {
-                    const imagenUrl = trabajo.imagen ? getProductImageUrl(trabajo.imagen) : null;
+                {/* BOTONES DE FILTRO POR CATEGORÍA EN GALERÍA */}
+                <div
+                  style={{
+                    display: 'flex',
+                    gap: '0.4rem',
+                    flexWrap: 'wrap',
+                    marginBottom: '1.5rem',
+                    justifyContent: 'center'
+                  }}
+                >
+                  {['Todos', 'Tortas', 'Tartas', 'Cajas de Desayuno', 'Mesa Dulce'].map((cat) => (
+                    <button
+                      key={cat}
+                      type="button"
+                      onClick={() => setCategoriaGaleria(cat)}
+                      className={`pestana ${categoriaGaleria === cat ? 'activa' : ''}`}
+                      style={{
+                        border: '1px solid var(--rosa-borde)',
+                        borderRadius: '20px',
+                        padding: '0.4rem 1rem',
+                        fontSize: '0.85rem',
+                        fontWeight: 'bold',
+                        background: categoriaGaleria === cat ? 'var(--rosa-principal)' : 'var(--blanco-card)',
+                        color: categoriaGaleria === cat ? '#ffffff' : 'var(--texto-oscuro)',
+                        cursor: 'pointer',
+                        transition: 'all 0.15s ease'
+                      }}
+                    >
+                      {cat === 'Tortas' && '🎂 '}
+                      {cat === 'Tartas' && '🥧 '}
+                      {cat === 'Cajas de Desayuno' && '☕ '}
+                      {cat === 'Mesa Dulce' && '🧁 '}
+                      {cat}
+                    </button>
+                  ))}
+                </div>
+
+                {/* GRILLA DE FOTOS FILTRABLE */}
+                {(() => {
+                  const trabajosVisibles = (dbGallery.length > 0 ? dbGallery : GALERIA_TRABAJOS).filter(
+                    (t) => categoriaGaleria === 'Todos' || t.categoria === categoriaGaleria
+                  );
+
+                  if (trabajosVisibles.length === 0) {
                     return (
-                      <div key={trabajo._id || trabajo.id} className="tarjeta-galeria">
-                        <div
-                          className="placeholder-foto"
-                          style={{
-                            overflow: 'hidden',
-                            padding: 0,
-                            background: 'var(--rosa-fondo)',
-                            height: '180px'
-                          }}
-                        >
-                          {imagenUrl ? (
-                            <img
-                              src={imagenUrl}
-                              alt={trabajo.titulo}
-                              style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                              onError={(e) => {
-                                e.currentTarget.style.display = 'none';
-                                e.currentTarget.parentElement.innerText = trabajo.emoji || '🎂';
-                              }}
-                            />
-                          ) : (
-                            <span style={{ fontSize: '3rem' }}>{trabajo.emoji || '🎂'}</span>
-                          )}
-                        </div>
-                        <div style={{ marginTop: '0.6rem' }}>
-                          {trabajo.categoria && (
-                            <span
-                              style={{
-                                fontSize: '0.7rem',
-                                background: 'var(--rosa-suave)',
-                                color: 'var(--rosa-principal)',
-                                padding: '2px 8px',
-                                borderRadius: '10px',
-                                fontWeight: 'bold',
-                                display: 'inline-block',
-                                marginBottom: '4px'
-                              }}
-                            >
-                              {trabajo.categoria}
-                            </span>
-                          )}
-                          <h4 style={{ fontFamily: 'Georgia, serif', margin: '0.2rem 0 0.3rem 0', color: 'var(--texto-oscuro)' }}>
-                            {trabajo.titulo}
-                          </h4>
-                          <p style={{ fontSize: '0.8rem', color: 'var(--texto-gris)', lineHeight: 1.35 }}>
-                            {trabajo.descripcion}
-                          </p>
-                        </div>
+                      <div style={{ textAlign: 'center', padding: '3rem', backgroundColor: 'var(--blanco-card)', borderRadius: '16px', border: '1px dashed var(--rosa-borde)' }}>
+                        <p style={{ color: 'var(--texto-gris)' }}>No hay fotos cargadas en esta categoría por el momento.</p>
                       </div>
                     );
-                  })}
-                </div>
+                  }
+
+                  return (
+                    <div className="grilla-galeria">
+                      {trabajosVisibles.map((trabajo) => {
+                        const imagenUrl = trabajo.imagen ? getProductImageUrl(trabajo.imagen) : null;
+                        return (
+                          <div key={trabajo._id || trabajo.id} className="tarjeta-galeria">
+                            <div
+                              className="placeholder-foto"
+                              style={{
+                                overflow: 'hidden',
+                                padding: 0,
+                                background: 'var(--rosa-fondo)',
+                                height: '180px',
+                                position: 'relative'
+                              }}
+                            >
+                              {imagenUrl ? (
+                                <img
+                                  src={imagenUrl}
+                                  alt={trabajo.titulo}
+                                  style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                                  onError={(e) => {
+                                    e.currentTarget.style.display = 'none';
+                                    e.currentTarget.parentElement.innerText = trabajo.emoji || '🎂';
+                                  }}
+                                />
+                              ) : (
+                                <span style={{ fontSize: '3rem' }}>{trabajo.emoji || '🎂'}</span>
+                              )}
+
+                              {trabajo.precio > 0 && (
+                                <span
+                                  style={{
+                                    position: 'absolute',
+                                    bottom: '8px',
+                                    right: '8px',
+                                    background: 'rgba(0, 0, 0, 0.75)',
+                                    color: '#ffffff',
+                                    fontSize: '0.8rem',
+                                    fontWeight: 700,
+                                    padding: '2px 8px',
+                                    borderRadius: '8px'
+                                  }}
+                                >
+                                  Ref: {formatPrice(trabajo.precio)}
+                                </span>
+                              )}
+                            </div>
+
+                            <div style={{ marginTop: '0.6rem', display: 'flex', flexDirection: 'column', flex: 1, justifyContent: 'space-between' }}>
+                              <div>
+                                {trabajo.categoria && (
+                                  <span
+                                    style={{
+                                      fontSize: '0.7rem',
+                                      background: 'var(--rosa-suave)',
+                                      color: 'var(--rosa-principal)',
+                                      padding: '2px 8px',
+                                      borderRadius: '10px',
+                                      fontWeight: 'bold',
+                                      display: 'inline-block',
+                                      marginBottom: '4px'
+                                    }}
+                                  >
+                                    {trabajo.categoria}
+                                  </span>
+                                )}
+                                <h4 style={{ fontFamily: 'Georgia, serif', margin: '0.2rem 0 0.3rem 0', color: 'var(--texto-oscuro)' }}>
+                                  {trabajo.titulo}
+                                </h4>
+                                {trabajo.descripcion && (
+                                  <p style={{ fontSize: '0.8rem', color: 'var(--texto-gris)', lineHeight: 1.35 }}>
+                                    {trabajo.descripcion}
+                                  </p>
+                                )}
+                              </div>
+
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  const msg = `¡Hola Hecho by Gaby! 🍰 Me encantó este trabajo de la galería: "${trabajo.titulo}" (${trabajo.categoria || 'Pastelería'}). ¿Quisiera consultar presupuesto y disponibilidad?`;
+                                  window.open(`https://wa.me/${WHATSAPP_NUMERO}?text=${encodeURIComponent(msg)}`, '_blank');
+                                }}
+                                className="boton-admin-link"
+                                style={{
+                                  marginTop: '10px',
+                                  width: '100%',
+                                  justifyContent: 'center',
+                                  fontSize: '0.78rem',
+                                  padding: '0.45rem',
+                                  borderColor: 'var(--verde-whatsapp)',
+                                  color: 'var(--texto-oscuro)'
+                                }}
+                              >
+                                💬 Consultar por WhatsApp
+                              </button>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  );
+                })()}
               </div>
             )}
 

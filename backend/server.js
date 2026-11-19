@@ -9,6 +9,8 @@ require('dotenv').config();
 
 const productRoutes = require('./routes/productRoutes');
 const galleryRoutes = require('./routes/galleryRoutes');
+const breakfastRoutes = require('./routes/breakfastRoutes');
+const cakeOptionRoutes = require('./routes/cakeOptionRoutes');
 
 const app = express();
 
@@ -43,9 +45,9 @@ app.use(cors({
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
 }));
 
-// Middlewares para procesar JSON y formularios URL-encoded
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+// Middlewares para procesar JSON y formularios URL-encoded con límite de 10mb
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ limit: '10mb', extended: true }));
 
 // Servir la carpeta de imágenes estáticas sólo si existe físicamente (desarrollo local)
 const uploadsPath = path.join(__dirname, 'uploads');
@@ -125,7 +127,9 @@ app.get('/', (req, res) => {
     endpoints: {
       health: '/api/health',
       productos: '/api/products',
-      galeria: '/api/gallery'
+      galeria: '/api/gallery',
+      desayunos: '/api/breakfast-items',
+      tortasConfig: '/api/cake-options'
     }
   });
 });
@@ -140,9 +144,11 @@ app.get('/api/health', (req, res) => {
   });
 });
 
-// Rutas modulares de productos y galería
+// Rutas modulares de la API
 app.use('/api/products', productRoutes);
 app.use('/api/gallery', galleryRoutes);
+app.use('/api/breakfast-items', breakfastRoutes);
+app.use('/api/cake-options', cakeOptionRoutes);
 
 // ----------------------------------------------------
 // MANEJO DE ERRORES Y RUTAS NO ENCONTRADAS
