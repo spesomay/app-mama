@@ -231,20 +231,16 @@ export default function AdminBreakfastManager() {
       )}
 
       {/* FORMULARIO DE CARGA / EDICIÓN */}
-      <div
-        style={{
-          backgroundColor: 'var(--blanco-card)',
-          border: '1px solid var(--rosa-borde)',
-          borderRadius: '16px',
-          padding: '1.5rem',
-          marginBottom: '2rem',
-          boxShadow: '0 4px 15px rgba(0, 0, 0, 0.04)'
-        }}
-      >
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem', flexWrap: 'wrap', gap: '0.5rem' }}>
-          <h3 style={{ fontFamily: 'Georgia, serif', color: 'var(--texto-oscuro)', fontSize: '1.25rem' }}>
-            {editingItem ? `✏️ Editando: ${editingItem.nombre}` : '☕ Cargar Nuevo Ítem de Desayuno'}
-          </h3>
+      <div className={`admin-card-formulario ${editingItem ? 'editando' : ''}`}>
+        <div className="admin-card-header">
+          <div>
+            <h3 className="admin-card-titulo">
+              {editingItem ? `✏️ Editando: ${editingItem.nombre}` : '☕ Cargar Nuevo Ítem de Desayuno'}
+            </h3>
+            <p className="admin-card-subtitulo">
+              Configurá las opciones dulces, saladas, infusiones o mini tortas para que los clientes armen su desayuno personalizado.
+            </p>
+          </div>
           {editingItem && (
             <button
               type="button"
@@ -257,11 +253,13 @@ export default function AdminBreakfastManager() {
           )}
         </div>
 
-        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1.1rem' }}>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1rem' }}>
+        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+          <div className="admin-form-grid">
             {/* Nombre */}
             <div className="campo-formulario">
-              <label className="label-formulario">Nombre del Producto *</label>
+              <label className="label-formulario">
+                <span>Nombre del Producto <span className="requerido">*</span></span>
+              </label>
               <input
                 type="text"
                 value={nombre}
@@ -274,7 +272,9 @@ export default function AdminBreakfastManager() {
 
             {/* Subcategoría */}
             <div className="campo-formulario">
-              <label className="label-formulario">Subcategoría *</label>
+              <label className="label-formulario">
+                <span>Subcategoría <span className="requerido">*</span></span>
+              </label>
               <select
                 value={subcategoria}
                 onChange={(e) => setSubcategoria(e.target.value)}
@@ -288,7 +288,9 @@ export default function AdminBreakfastManager() {
 
             {/* Precio */}
             <div className="campo-formulario">
-              <label className="label-formulario">Precio ($ ARS) *</label>
+              <label className="label-formulario">
+                <span>Precio ($ ARS) <span className="requerido">*</span></span>
+              </label>
               <input
                 type="number"
                 value={precio}
@@ -302,7 +304,10 @@ export default function AdminBreakfastManager() {
 
             {/* Emoji representativo */}
             <div className="campo-formulario">
-              <label className="label-formulario">Ícono / Emoji</label>
+              <label className="label-formulario">
+                <span>Ícono / Emoji</span>
+                <span className="label-hint">Visual</span>
+              </label>
               <input
                 type="text"
                 value={emoji}
@@ -312,121 +317,124 @@ export default function AdminBreakfastManager() {
                 maxLength="4"
               />
             </div>
-          </div>
 
-          {/* Descripción */}
-          <div className="campo-formulario">
-            <label className="label-formulario">Descripción Breve</label>
-            <textarea
-              value={descripcion}
-              onChange={(e) => setDescripcion(e.target.value)}
-              placeholder="Ej. Horneada en el día con pura manteca y almíbar clásico..."
-              className="input-formulario"
-              rows="2"
-              style={{ resize: 'vertical' }}
-            />
-          </div>
-
-          {/* Imagen (Opcional) */}
-          <div className="campo-formulario">
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.4rem' }}>
-              <label className="label-formulario" style={{ marginBottom: 0 }}>Foto del Ítem (Opcional)</label>
-              <div style={{ display: 'flex', gap: '0.4rem' }}>
-                <button
-                  type="button"
-                  onClick={() => setImageMode('file')}
-                  style={{
-                    border: 'none',
-                    background: imageMode === 'file' ? 'var(--rosa-suave)' : 'transparent',
-                    color: imageMode === 'file' ? 'var(--rosa-principal)' : 'var(--texto-gris)',
-                    padding: '2px 8px',
-                    borderRadius: '8px',
-                    fontSize: '0.75rem',
-                    fontWeight: 600,
-                    cursor: 'pointer'
-                  }}
-                >
-                  📁 Subir Archivo
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setImageMode('url')}
-                  style={{
-                    border: 'none',
-                    background: imageMode === 'url' ? 'var(--rosa-suave)' : 'transparent',
-                    color: imageMode === 'url' ? 'var(--rosa-principal)' : 'var(--texto-gris)',
-                    padding: '2px 8px',
-                    borderRadius: '8px',
-                    fontSize: '0.75rem',
-                    fontWeight: 600,
-                    cursor: 'pointer'
-                  }}
-                >
-                  🔗 URL Web
-                </button>
-              </div>
+            {/* Descripción Breve - campo de ancho completo */}
+            <div className="campo-formulario campo-span-full">
+              <label className="label-formulario">
+                <span>Descripción Breve</span>
+                <span className="label-hint">Ingredientes o presentación</span>
+              </label>
+              <textarea
+                value={descripcion}
+                onChange={(e) => setDescripcion(e.target.value)}
+                placeholder="Ej. Horneada en el día con pura manteca y almíbar clásico..."
+                className="input-formulario"
+                rows="2"
+              />
             </div>
 
-            {imageMode === 'file' ? (
-              <div>
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept="image/*"
-                  onChange={handleFileChange}
-                  className="input-formulario"
-                  style={{ padding: '0.5rem' }}
-                />
-                {filePreview && (
-                  <div style={{ marginTop: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                    <img
-                      src={filePreview}
-                      alt="Vista previa"
-                      style={{ width: '60px', height: '60px', objectFit: 'cover', borderRadius: '8px', border: '1px solid var(--rosa-borde)' }}
-                    />
+            {/* Foto del Ítem - campo de ancho completo */}
+            <div className="campo-formulario campo-span-full">
+              <div className="admin-media-box">
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.5rem' }}>
+                  <label className="label-formulario" style={{ margin: 0 }}>
+                    <span>Foto del Ítem</span>
+                    <span className="label-hint">Opcional</span>
+                  </label>
+                  <div className="admin-modo-selector">
                     <button
                       type="button"
-                      onClick={handleClearImage}
-                      style={{ color: '#b91c1c', background: 'none', border: 'none', fontSize: '0.8rem', cursor: 'pointer', textDecoration: 'underline' }}
+                      onClick={() => setImageMode('file')}
+                      className={`admin-modo-btn ${imageMode === 'file' ? 'activo' : ''}`}
                     >
-                      Quitar foto
+                      📁 Subir Archivo
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setImageMode('url')}
+                      className={`admin-modo-btn ${imageMode === 'url' ? 'activo' : ''}`}
+                    >
+                      🔗 Enlace Web
                     </button>
                   </div>
+                </div>
+
+                {imageMode === 'file' ? (
+                  <div>
+                    {!filePreview ? (
+                      <div
+                        className="admin-file-picker-custom"
+                        onClick={() => fileInputRef.current?.click()}
+                      >
+                        <span className="admin-file-picker-icon">📸</span>
+                        <span className="admin-file-picker-text">Tocá aquí para elegir una foto</span>
+                        <span className="admin-file-picker-hint">Formatos JPG, PNG, WebP (hasta 10MB)</span>
+                        <input
+                          ref={fileInputRef}
+                          type="file"
+                          accept="image/*"
+                          onChange={handleFileChange}
+                          className="admin-file-input-hidden"
+                        />
+                      </div>
+                    ) : (
+                      <div className="admin-preview-tarjeta">
+                        <img
+                          src={filePreview}
+                          alt="Vista previa"
+                          className="admin-preview-thumb"
+                        />
+                        <div className="admin-preview-info">
+                          <span className="admin-preview-nombre">{selectedFile?.name || 'Foto seleccionada'}</span>
+                          <span className="admin-preview-sub">
+                            {selectedFile ? `${(selectedFile.size / 1024).toFixed(1)} KB` : 'Listo para guardar'}
+                          </span>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={handleClearImage}
+                          className="admin-preview-btn-quitar"
+                        >
+                          ✕ Quitar
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <input
+                    type="url"
+                    value={imageUrl}
+                    onChange={(e) => setImageUrl(e.target.value)}
+                    placeholder="https://ejemplo.com/foto-desayuno.jpg"
+                    className="input-formulario"
+                  />
                 )}
               </div>
-            ) : (
-              <input
-                type="url"
-                value={imageUrl}
-                onChange={(e) => setImageUrl(e.target.value)}
-                placeholder="https://ejemplo.com/foto-desayuno.jpg"
-                className="input-formulario"
-              />
-            )}
+            </div>
           </div>
 
-          {/* Checkbox Disponible */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+          {/* Checkbox Disponible Estilizado */}
+          <label className="admin-checkbox-card" htmlFor="disp-desayuno">
             <input
               id="disp-desayuno"
               type="checkbox"
               checked={disponible}
               onChange={(e) => setDisponible(e.target.checked)}
-              style={{ width: '18px', height: '18px', cursor: 'pointer', accentColor: 'var(--rosa-principal)' }}
+              className="admin-checkbox-input"
             />
-            <label htmlFor="disp-desayuno" style={{ fontSize: '0.9rem', color: 'var(--texto-oscuro)', cursor: 'pointer' }}>
-              Ítem disponible para que los clientes lo elijan
-            </label>
-          </div>
+            <span className="admin-checkbox-label">
+              Ítem activo y disponible para que los clientes lo elijan
+            </span>
+          </label>
 
           {/* Botones de acción */}
-          <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'flex-end', marginTop: '0.5rem' }}>
+          <div className="admin-form-acciones">
             {editingItem && (
               <button
                 type="button"
                 onClick={resetForm}
                 className="boton-admin-link"
-                style={{ padding: '0.6rem 1.25rem' }}
+                style={{ padding: '0.65rem 1.25rem' }}
               >
                 Cancelar
               </button>
@@ -435,9 +443,9 @@ export default function AdminBreakfastManager() {
               type="submit"
               disabled={isSubmitting}
               className="admin-btn-ingresar"
-              style={{ width: 'auto', padding: '0.6rem 1.75rem', minHeight: '44px' }}
+              style={{ width: 'auto', padding: '0.65rem 1.75rem', minHeight: '44px' }}
             >
-              {isSubmitting ? 'Guardando en MongoDB...' : (editingItem ? '💾 Guardar Cambios' : '➕ Agregar Ítem')}
+              {isSubmitting ? 'Guardando...' : (editingItem ? '💾 Guardar Cambios' : '➕ Agregar Ítem')}
             </button>
           </div>
         </form>

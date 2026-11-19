@@ -1282,4 +1282,418 @@ button, input, select, textarea {
   }
 }
 
+/* ==========================================================================
+   FORMULARIOS DEL PANEL DE ADMINISTRACIÓN (DISEÑO COHESIVO & RESPONSIVO)
+   ========================================================================== */
+
+/* Contenedor principal de la tarjeta de formulario */
+.admin-card-formulario {
+  background-color: var(--blanco-card);
+  border: 1px solid var(--rosa-borde);
+  border-radius: 16px;
+  padding: 1.5rem;
+  margin-bottom: 2rem;
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.04);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.admin-card-formulario.editando {
+  border: 2px solid var(--rosa-principal);
+  box-shadow: 0 6px 20px rgba(255, 77, 109, 0.12);
+}
+
+.admin-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.25rem;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.admin-card-titulo {
+  font-family: 'Georgia', serif;
+  color: var(--texto-oscuro);
+  font-size: 1.25rem;
+  font-weight: 700;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.admin-card-subtitulo {
+  color: var(--texto-gris);
+  font-size: 0.85rem;
+  margin-top: 0.25rem;
+  line-height: 1.35;
+}
+
+/* Grilla del Formulario: 2 columnas en Desktop/Tablet, 1 columna en Celulares */
+.admin-form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1.15rem;
+  width: 100%;
+}
+
+@media (max-width: 680px) {
+  .admin-form-grid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+}
+
+/* Campos individuales */
+.campo-formulario {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.campo-span-full {
+  grid-column: 1 / -1;
+}
+
+.label-formulario {
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--texto-oscuro);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.label-formulario .requerido {
+  color: var(--rosa-principal);
+  font-weight: 700;
+  margin-left: 2px;
+}
+
+.label-formulario .label-hint {
+  font-size: 0.76rem;
+  font-weight: normal;
+  color: var(--texto-gris);
+}
+
+/* Inputs, Selects y Textareas unificados */
+.input-formulario {
+  width: 100%;
+  padding: 0.75rem 0.95rem;
+  font-size: 0.95rem;
+  font-family: inherit;
+  color: var(--texto-oscuro);
+  background-color: var(--blanco-card);
+  border: 1.5px solid var(--rosa-borde);
+  border-radius: 12px;
+  outline: none;
+  box-sizing: border-box;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.input-formulario::placeholder {
+  color: #adb5bd;
+  font-size: 0.9rem;
+}
+
+.input-formulario:focus {
+  border-color: var(--rosa-principal);
+  box-shadow: 0 0 0 3px rgba(255, 77, 109, 0.18);
+  background-color: #ffffff;
+}
+
+/* Input select con chevron SVG estilizado en tono rosa */
+select.input-formulario {
+  cursor: pointer;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23ff4d6d' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.95rem center;
+  background-size: 16px;
+  padding-right: 2.5rem;
+}
+
+/* Textarea unificado con altura cómoda y etiqueta separada */
+textarea.input-formulario {
+  min-height: 85px;
+  resize: vertical;
+  line-height: 1.45;
+}
+
+/* ==========================================================================
+   SELECTOR DE ARCHIVO / FOTO ESTILIZADO (DROPZONE PASTEL PERSONALIZADA)
+   ========================================================================== */
+
+.admin-media-box {
+  background: var(--rosa-fondo);
+  border: 1px dashed var(--rosa-borde);
+  border-radius: 14px;
+  padding: 1.15rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.admin-modo-selector {
+  display: inline-flex;
+  background: rgba(255, 77, 109, 0.08);
+  padding: 3px;
+  border-radius: 24px;
+  gap: 3px;
+  align-self: flex-start;
+}
+
+.admin-modo-btn {
+  border: none;
+  background: transparent;
+  color: var(--texto-gris);
+  padding: 0.4rem 0.85rem;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.admin-modo-btn.activo {
+  background: var(--blanco-card);
+  color: var(--rosa-principal);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
+}
+
+/* Dropzone de subida de archivos (reemplaza el botón gris nativo) */
+.admin-file-picker-custom {
+  position: relative;
+  border: 2px dashed var(--rosa-borde);
+  background: var(--blanco-card);
+  border-radius: 12px;
+  padding: 1.4rem 1rem;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.admin-file-picker-custom:hover {
+  border-color: var(--rosa-principal);
+  background: var(--rosa-suave);
+  transform: translateY(-1px);
+}
+
+.admin-file-picker-icon {
+  font-size: 1.8rem;
+  line-height: 1;
+}
+
+.admin-file-picker-text {
+  font-size: 0.92rem;
+  font-weight: 600;
+  color: var(--texto-oscuro);
+}
+
+.admin-file-picker-hint {
+  font-size: 0.78rem;
+  color: var(--texto-gris);
+}
+
+.admin-file-input-hidden {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  cursor: pointer;
+}
+
+/* Vista previa de archivo seleccionado */
+.admin-preview-tarjeta {
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+  background: var(--blanco-card);
+  border: 1px solid var(--rosa-borde);
+  border-radius: 12px;
+  padding: 0.65rem 0.9rem;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.admin-preview-thumb {
+  width: 64px;
+  height: 64px;
+  object-fit: cover;
+  border-radius: 8px;
+  border: 1px solid var(--rosa-borde);
+  flex-shrink: 0;
+}
+
+.admin-preview-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  flex-grow: 1;
+  min-width: 0;
+}
+
+.admin-preview-nombre {
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--texto-oscuro);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.admin-preview-sub {
+  font-size: 0.75rem;
+  color: var(--texto-gris);
+}
+
+.admin-preview-btn-quitar {
+  background: #fee2e2;
+  color: #b91c1c;
+  border: 1px solid #fca5a5;
+  border-radius: 20px;
+  padding: 0.35rem 0.75rem;
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.admin-preview-btn-quitar:hover {
+  background: #fecaca;
+  color: #991b1b;
+}
+
+/* Checkbox estilizado */
+.admin-checkbox-card {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  padding: 0.65rem 0.9rem;
+  background: var(--rosa-fondo);
+  border: 1px solid var(--rosa-borde);
+  border-radius: 10px;
+  cursor: pointer;
+  user-select: none;
+  transition: all 0.15s ease;
+  width: fit-content;
+}
+
+.admin-checkbox-card:hover {
+  background: var(--rosa-suave);
+}
+
+.admin-checkbox-input {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--rosa-principal);
+  cursor: pointer;
+  margin: 0;
+}
+
+.admin-checkbox-label {
+  font-size: 0.88rem;
+  color: var(--texto-oscuro);
+  font-weight: 500;
+  cursor: pointer;
+}
+
+/* Acciones del formulario */
+.admin-form-acciones {
+  display: flex;
+  gap: 0.75rem;
+  justify-content: flex-end;
+  align-items: center;
+  margin-top: 0.5rem;
+  flex-wrap: wrap;
+}
+
+@media (max-width: 500px) {
+  .admin-form-acciones {
+    flex-direction: column-reverse;
+  }
+  .admin-form-acciones button {
+    width: 100%;
+    justify-content: center;
+  }
+  .admin-checkbox-card {
+    width: 100%;
+  }
+}
+
+/* Dark Mode para formularios del panel */
+[data-theme="dark"] .admin-card-formulario {
+  background-color: var(--blanco-card);
+  border-color: var(--rosa-borde);
+}
+
+[data-theme="dark"] .input-formulario {
+  background-color: #1a1a1a;
+  border-color: #4a242c;
+  color: #f8f9fa;
+}
+
+[data-theme="dark"] .input-formulario:focus {
+  background-color: #222222;
+  border-color: var(--rosa-principal);
+}
+
+[data-theme="dark"] .admin-media-box {
+  background-color: #141414;
+  border-color: #4a242c;
+}
+
+[data-theme="dark"] .admin-file-picker-custom {
+  background-color: #1a1a1a;
+  border-color: #4a242c;
+}
+
+[data-theme="dark"] .admin-file-picker-custom:hover {
+  background-color: #2d1a20;
+}
+
+[data-theme="dark"] .admin-preview-tarjeta {
+  background-color: #1a1a1a;
+  border-color: #4a242c;
+}
+
+[data-theme="dark"] .admin-checkbox-card {
+  background-color: #141414;
+  border-color: #4a242c;
+}
+
+[data-theme="dark"] .admin-checkbox-card:hover {
+  background-color: #2d1a20;
+}
+
+[data-theme="dark"] .admin-modo-btn.activo {
+  background-color: #2d1a20;
+  color: #ff4d6d;
+}
+
+
 

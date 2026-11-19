@@ -215,24 +215,15 @@ export default function AdminCakeManager() {
       </div>
 
       {/* FORMULARIO DE CARGA / EDICIÓN */}
-      <div
-        style={{
-          backgroundColor: 'var(--blanco-card)',
-          border: '1px solid var(--rosa-borde)',
-          borderRadius: '16px',
-          padding: '1.5rem',
-          marginBottom: '2rem',
-          boxShadow: '0 4px 15px rgba(0, 0, 0, 0.04)'
-        }}
-      >
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem', flexWrap: 'wrap', gap: '0.5rem' }}>
+      <div className={`admin-card-formulario ${editingOption ? 'editando' : ''}`}>
+        <div className="admin-card-header">
           <div>
-            <h3 style={{ fontFamily: 'Georgia, serif', color: 'var(--texto-oscuro)', fontSize: '1.25rem' }}>
+            <h3 className="admin-card-titulo">
               {editingOption
                 ? `✏️ Editando: ${editingOption.nombre}`
                 : `➕ Agregar opción en ${TIPOS_CONFIG.find((t) => t.id === activeTipo)?.label}`}
             </h3>
-            <p style={{ color: 'var(--texto-gris)', fontSize: '0.85rem', marginTop: '2px' }}>
+            <p className="admin-card-subtitulo">
               {activeTipo === 'tamano'
                 ? 'El precio corresponde al valor base y define cuántos rellenos permite este tamaño.'
                 : 'El precio corresponde al adicional sumado al valor base.'}
@@ -250,12 +241,15 @@ export default function AdminCakeManager() {
           )}
         </div>
 
-        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1.1rem' }}>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1rem' }}>
+        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+          <div className="admin-form-grid">
             {/* Nombre */}
             <div className="campo-formulario">
               <label className="label-formulario">
-                {activeTipo === 'tamano' ? 'Nombre del Tamaño / Porciones *' : 'Nombre de la Opción *'}
+                <span>
+                  {activeTipo === 'tamano' ? 'Nombre del Tamaño / Porciones' : 'Nombre de la Opción'}{' '}
+                  <span className="requerido">*</span>
+                </span>
               </label>
               <input
                 type="text"
@@ -278,13 +272,16 @@ export default function AdminCakeManager() {
             {/* Precio Base o Adicional */}
             <div className="campo-formulario">
               <label className="label-formulario">
-                {activeTipo === 'tamano' ? 'Precio Base ($ ARS) *' : 'Precio Adicional ($ ARS) *'}
+                <span>
+                  {activeTipo === 'tamano' ? 'Precio Base ($ ARS)' : 'Precio Adicional ($ ARS)'}{' '}
+                  <span className="requerido">*</span>
+                </span>
               </label>
               <input
                 type="number"
                 value={precio}
                 onChange={(e) => setPrecio(e.target.value)}
-                placeholder={activeTipo === 'tamano' ? 'Ej. 20000' : 'Ej. 1500 (o 0 si no tiene extra)'}
+                placeholder={activeTipo === 'tamano' ? 'Ej. 20000' : 'Ej. 1500 (o 0 si es sin extra)'}
                 className="input-formulario"
                 min="0"
                 required
@@ -293,9 +290,10 @@ export default function AdminCakeManager() {
 
             {/* Máximo de Rellenos (solo para Tamaños) */}
             {activeTipo === 'tamano' && (
-              <div className="campo-formulario">
+              <div className="campo-formulario campo-span-full">
                 <label className="label-formulario">
-                  Máximo de Rellenos Permitidos *
+                  <span>Máximo de Rellenos Permitidos <span className="requerido">*</span></span>
+                  <span className="label-hint">Límite para este tamaño</span>
                 </label>
                 <select
                   value={maxRellenos}
@@ -303,52 +301,52 @@ export default function AdminCakeManager() {
                   className="input-formulario"
                   style={{ fontWeight: 600 }}
                 >
-                  <option value={1}>1 Relleno máximo</option>
-                  <option value={2}>2 Rellenos máximos</option>
-                  <option value={3}>3 Rellenos máximos</option>
-                  <option value={4}>4 Rellenos máximos</option>
+                  <option value={1}>1 Relleno máximo permitido</option>
+                  <option value={2}>2 Rellenos máximos permitidos</option>
+                  <option value={3}>3 Rellenos máximos permitidos</option>
+                  <option value={4}>4 Rellenos máximos permitidos</option>
                 </select>
-                <span style={{ fontSize: '0.75rem', color: 'var(--texto-gris)', marginTop: '4px' }}>
-                  El cliente solo podrá marcar hasta esta cantidad al elegir este tamaño.
-                </span>
               </div>
             )}
+
+            {/* Descripción opcional */}
+            <div className="campo-formulario campo-span-full">
+              <label className="label-formulario">
+                <span>Descripción Breve</span>
+                <span className="label-hint">Opcional para guiar al cliente</span>
+              </label>
+              <textarea
+                value={descripcion}
+                onChange={(e) => setDescripcion(e.target.value)}
+                placeholder="Detalles adicionales, recomendaciones de sabores o notas..."
+                className="input-formulario"
+                rows="2"
+              />
+            </div>
           </div>
 
-          {/* Descripción opcional */}
-          <div className="campo-formulario">
-            <label className="label-formulario">Descripción Breve (Opcional)</label>
-            <input
-              type="text"
-              value={descripcion}
-              onChange={(e) => setDescripcion(e.target.value)}
-              placeholder="Detalles adicionales, recomendaciones o notas..."
-              className="input-formulario"
-            />
-          </div>
-
-          {/* Checkbox Disponible */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+          {/* Checkbox Disponible Estilizado */}
+          <label className="admin-checkbox-card" htmlFor="disp-cake-opt">
             <input
               id="disp-cake-opt"
               type="checkbox"
               checked={disponible}
               onChange={(e) => setDisponible(e.target.checked)}
-              style={{ width: '18px', height: '18px', cursor: 'pointer', accentColor: 'var(--rosa-principal)' }}
+              className="admin-checkbox-input"
             />
-            <label htmlFor="disp-cake-opt" style={{ fontSize: '0.9rem', color: 'var(--texto-oscuro)', cursor: 'pointer' }}>
-              Opción disponible en el constructor de tortas
-            </label>
-          </div>
+            <span className="admin-checkbox-label">
+              Opción activa y disponible en el constructor de tortas
+            </span>
+          </label>
 
-          {/* Botones */}
-          <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'flex-end', marginTop: '0.5rem' }}>
+          {/* Botones de acción */}
+          <div className="admin-form-acciones">
             {editingOption && (
               <button
                 type="button"
                 onClick={resetForm}
                 className="boton-admin-link"
-                style={{ padding: '0.6rem 1.25rem' }}
+                style={{ padding: '0.65rem 1.25rem' }}
               >
                 Cancelar
               </button>
@@ -357,9 +355,9 @@ export default function AdminCakeManager() {
               type="submit"
               disabled={isSubmitting}
               className="admin-btn-ingresar"
-              style={{ width: 'auto', padding: '0.6rem 1.75rem', minHeight: '44px' }}
+              style={{ width: 'auto', padding: '0.65rem 1.75rem', minHeight: '44px' }}
             >
-              {isSubmitting ? 'Guardando en MongoDB...' : (editingOption ? '💾 Guardar Cambios' : '➕ Guardar Opción')}
+              {isSubmitting ? 'Guardando...' : (editingOption ? '💾 Guardar Cambios' : '➕ Guardar Opción')}
             </button>
           </div>
         </form>

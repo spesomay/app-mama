@@ -136,21 +136,23 @@ export default function AdminProductForm({ editingProduct, onSave, onCancelEdit,
     onSave(formData, resetForm);
   };
 
-  // Determinar vista previa de imagen a mostrar
-  const currentPreview = imageMode === 'file' ? filePreview : imageUrl;
-
   return (
-    <div className="tarjeta-paso" style={{ border: editingProduct ? '2px solid var(--rosa-principal)' : '1px solid var(--rosa-borde)' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', flexWrap: 'wrap', gap: '0.5rem' }}>
-        <h3 className="subtitulo-form" style={{ margin: 0 }}>
-          {editingProduct ? '✏️ Modificar Producto' : '➕ Cargar Nuevo Producto al Catálogo'}
-        </h3>
+    <div className={`admin-card-formulario ${editingProduct ? 'editando' : ''}`}>
+      <div className="admin-card-header">
+        <div>
+          <h3 className="admin-card-titulo">
+            {editingProduct ? `✏️ Modificar: ${editingProduct.nombre}` : '➕ Cargar Nuevo Producto al Catálogo'}
+          </h3>
+          <p className="admin-card-subtitulo">
+            Agregá o editá tortas, tartas y productos destacados para el catálogo principal de la tienda.
+          </p>
+        </div>
         {editingProduct && (
           <button
             type="button"
             onClick={onCancelEdit}
-            className="btn-eliminar-item"
-            style={{ fontSize: '0.85rem', color: 'var(--texto-gris)', textDecoration: 'underline' }}
+            className="boton-admin-link"
+            style={{ fontSize: '0.8rem', padding: '0.35rem 0.75rem' }}
           >
             Cancelar Edición
           </button>
@@ -158,130 +160,126 @@ export default function AdminProductForm({ editingProduct, onSave, onCancelEdit,
       </div>
 
       {validationError && (
-        <div style={{ background: '#fee2e2', border: '1px solid #f87171', color: '#b91c1c', padding: '0.75rem 1rem', borderRadius: '10px', marginBottom: '1rem', fontSize: '0.85rem' }}>
+        <div style={{ background: '#fee2e2', border: '1px solid #f87171', color: '#b91c1c', padding: '0.75rem 1rem', borderRadius: '12px', marginBottom: '1.25rem', fontSize: '0.88rem' }}>
           ⚠️ {validationError}
         </div>
       )}
 
       <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
 
-        {/* SECCIÓN 1: SELECCIÓN DE IMAGEN CON VISTA PREVIA */}
-        <div style={{ background: 'var(--rosa-fondo)', padding: '1.25rem', borderRadius: '14px', border: '1px dashed var(--rosa-borde)' }}>
-          <label style={{ fontSize: '0.9rem', fontWeight: 'bold', display: 'block', marginBottom: '0.6rem', color: 'var(--texto-oscuro)' }}>
-            🖼️ Imagen del Producto (Tortas, Tartas o Cajas de Desayuno)
-          </label>
-
-          <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '0.85rem' }}>
-            <button
-              type="button"
-              onClick={() => setImageMode('file')}
-              className={`pestana ${imageMode === 'file' ? 'activa' : ''}`}
-              style={{ padding: '0.35rem 0.85rem', fontSize: '0.85rem', borderRadius: '20px', border: '1px solid var(--rosa-borde)' }}
-            >
-              📁 Subir desde mi dispositivo
-            </button>
-            <button
-              type="button"
-              onClick={() => setImageMode('url')}
-              className={`pestana ${imageMode === 'url' ? 'activa' : ''}`}
-              style={{ padding: '0.35rem 0.85rem', fontSize: '0.85rem', borderRadius: '20px', border: '1px solid var(--rosa-borde)' }}
-            >
-              🔗 Pegar enlace URL web
-            </button>
+        {/* SECCIÓN 1: SELECCIÓN DE IMAGEN ESTILIZADA */}
+        <div className="admin-media-box">
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.5rem' }}>
+            <label className="label-formulario" style={{ margin: 0 }}>
+              <span>🖼️ Imagen del Producto</span>
+              <span className="label-hint">Tortas, Tartas o Cajas</span>
+            </label>
+            <div className="admin-modo-selector">
+              <button
+                type="button"
+                onClick={() => setImageMode('file')}
+                className={`admin-modo-btn ${imageMode === 'file' ? 'activo' : ''}`}
+              >
+                📁 Subir Archivo
+              </button>
+              <button
+                type="button"
+                onClick={() => setImageMode('url')}
+                className={`admin-modo-btn ${imageMode === 'url' ? 'activo' : ''}`}
+              >
+                🔗 Enlace Web
+              </button>
+            </div>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: currentPreview ? '1fr 140px' : '1fr', gap: '1rem', alignItems: 'center' }}>
+          {imageMode === 'file' ? (
             <div>
-              {imageMode === 'file' ? (
-                <div>
+              {!filePreview ? (
+                <div
+                  className="admin-file-picker-custom"
+                  onClick={() => fileInputRef.current?.click()}
+                >
+                  <span className="admin-file-picker-icon">📸</span>
+                  <span className="admin-file-picker-text">Tocá aquí para elegir una foto del producto</span>
+                  <span className="admin-file-picker-hint">Formatos JPG, PNG, WebP (hasta 10MB)</span>
                   <input
-                    type="file"
                     ref={fileInputRef}
+                    type="file"
                     accept="image/*"
                     onChange={handleFileChange}
-                    className="campo-texto"
-                    style={{ background: 'white' }}
+                    className="admin-file-input-hidden"
                   />
-                  <small style={{ color: 'var(--texto-gris)', display: 'block', marginTop: '4px', fontSize: '0.75rem' }}>
-                    Formatos soportados: JPG, PNG, WEBP. Máximo 5MB.
-                  </small>
                 </div>
               ) : (
-                <div>
-                  <input
-                    type="url"
-                    placeholder="https://ejemplo.com/fotos/torta-lemon-pie.jpg"
-                    value={imageUrl}
-                    onChange={(e) => setImageUrl(e.target.value)}
-                    className="campo-texto"
-                    style={{ background: 'white' }}
+                <div className="admin-preview-tarjeta">
+                  <img
+                    src={filePreview}
+                    alt="Vista previa"
+                    className="admin-preview-thumb"
                   />
-                  <small style={{ color: 'var(--texto-gris)', display: 'block', marginTop: '4px', fontSize: '0.75rem' }}>
-                    Pegá un enlace directo a una imagen de la web o de tus redes sociales.
-                  </small>
+                  <div className="admin-preview-info">
+                    <span className="admin-preview-nombre">{selectedFile?.name || 'Foto del producto'}</span>
+                    <span className="admin-preview-sub">
+                      {selectedFile ? `${(selectedFile.size / 1024).toFixed(1)} KB` : 'Listo para guardar'}
+                    </span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={handleClearImage}
+                    className="admin-preview-btn-quitar"
+                  >
+                    ✕ Quitar
+                  </button>
                 </div>
               )}
             </div>
-
-            {/* Miniatura de vista previa */}
-            {currentPreview && (
-              <div style={{ position: 'relative', width: '130px', height: '110px', borderRadius: '12px', overflow: 'hidden', border: '2px solid var(--rosa-principal)', background: 'white' }}>
-                <img
-                  src={currentPreview}
-                  alt="Vista previa"
-                  style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                  onError={(e) => {
-                    e.currentTarget.style.display = 'none';
-                  }}
-                />
-                <button
-                  type="button"
-                  onClick={handleClearImage}
-                  title="Quitar imagen"
-                  style={{
-                    position: 'absolute',
-                    top: '4px',
-                    right: '4px',
-                    background: 'rgba(220, 38, 38, 0.85)',
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: '50%',
-                    width: '24px',
-                    height: '24px',
-                    cursor: 'pointer',
-                    fontSize: '12px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center'
-                  }}
-                >
-                  ✕
-                </button>
-              </div>
-            )}
-          </div>
+          ) : (
+            <div>
+              <input
+                type="url"
+                placeholder="https://ejemplo.com/fotos/torta-lemon-pie.jpg"
+                value={imageUrl}
+                onChange={(e) => setImageUrl(e.target.value)}
+                className="input-formulario"
+              />
+              {imageUrl && (
+                <div style={{ marginTop: '0.75rem' }}>
+                  <img
+                    src={imageUrl}
+                    alt="Vista previa URL"
+                    style={{ width: '80px', height: '80px', objectFit: 'cover', borderRadius: '10px', border: '1px solid var(--rosa-borde)' }}
+                    onError={(e) => { e.currentTarget.style.display = 'none'; }}
+                  />
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
-        {/* SECCIÓN 2: DATOS PRINCIPALES (NOMBRE, CATEGORÍA, PRECIO) */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1rem' }}>
-          <div className="campo-grupo">
-            <label>Nombre del Producto *</label>
+        {/* SECCIÓN 2: DATOS PRINCIPALES EN GRILLA RESPONSIVA */}
+        <div className="admin-form-grid">
+          <div className="campo-formulario">
+            <label className="label-formulario">
+              <span>Nombre del Producto <span className="requerido">*</span></span>
+            </label>
             <input
               type="text"
               placeholder="Ej: Drip Cake de Chocolate Intenso"
               value={nombre}
               onChange={(e) => setNombre(e.target.value)}
-              className="campo-texto"
+              className="input-formulario"
               required
             />
           </div>
 
-          <div className="campo-grupo">
-            <label>Categoría *</label>
+          <div className="campo-formulario">
+            <label className="label-formulario">
+              <span>Categoría <span className="requerido">*</span></span>
+            </label>
             <select
               value={categoria}
               onChange={(e) => setCategoria(e.target.value)}
-              className="campo-texto"
+              className="input-formulario"
             >
               <option value="Tortas">🎂 Tortas</option>
               <option value="Tartas">🥧 Tartas</option>
@@ -290,52 +288,55 @@ export default function AdminProductForm({ editingProduct, onSave, onCancelEdit,
             </select>
           </div>
 
-          <div className="campo-grupo">
-            <label>Precio de Venta ($) *</label>
-            <div style={{ position: 'relative' }}>
-              <input
-                type="number"
-                min="0"
-                step="50"
-                placeholder="12000"
-                value={precio}
-                onChange={(e) => setPrecio(e.target.value)}
-                className="campo-texto"
-                required
-              />
+          <div className="campo-formulario campo-span-full">
+            <label className="label-formulario">
+              <span>Precio de Venta ($ ARS) <span className="requerido">*</span></span>
               {precio !== '' && !isNaN(Number(precio)) && (
-                <span style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)', fontSize: '0.85rem', fontWeight: 'bold', color: 'var(--rosa-principal)' }}>
+                <span className="label-hint" style={{ color: 'var(--rosa-principal)', fontWeight: 'bold' }}>
                   {formatPrice(precio)}
                 </span>
               )}
-            </div>
+            </label>
+            <input
+              type="number"
+              min="0"
+              step="50"
+              placeholder="Ej. 12000"
+              value={precio}
+              onChange={(e) => setPrecio(e.target.value)}
+              className="input-formulario"
+              required
+            />
+          </div>
+
+          {/* SECCIÓN 3: DESCRIPCIÓN DETALLADA (ANCHO COMPLETO) */}
+          <div className="campo-formulario campo-span-full">
+            <label className="label-formulario">
+              <span>Descripción detallada</span>
+              <span className="label-hint">Ingredientes, porciones estimadas y presentación</span>
+            </label>
+            <textarea
+              placeholder="Describí los ingredientes, presentación, cantidad estimada de personas o detalles artesanales..."
+              value={descripcion}
+              onChange={(e) => setDescripcion(e.target.value)}
+              className="input-formulario"
+              rows="3"
+            />
           </div>
         </div>
 
-        {/* SECCIÓN 3: DESCRIPCIÓN DETALLADA */}
-        <div className="campo-grupo">
-          <label>Descripción detallada del producto</label>
-          <textarea
-            placeholder="Describí los ingredientes, presentación, cantidad estimada de personas o detalles artesanales..."
-            value={descripcion}
-            onChange={(e) => setDescripcion(e.target.value)}
-            className="campo-texto"
-            rows="3"
-          />
-        </div>
-
         {/* SECCIÓN 4: OPCIONES DINÁMICAS (TAMAÑOS, PORCIONES O RELLENOS) */}
-        <div style={{ background: 'var(--blanco-card)', border: '1px solid var(--rosa-borde)', padding: '1rem', borderRadius: '12px' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem', flexWrap: 'wrap', gap: '0.5rem' }}>
-            <label style={{ fontSize: '0.85rem', fontWeight: '600', color: 'var(--texto-oscuro)' }}>
-              🍰 Opciones de Tamaño, Porciones o Rellenos disponibles:
+        <div style={{ background: 'var(--rosa-fondo)', border: '1px solid var(--rosa-borde)', padding: '1.15rem', borderRadius: '12px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.65rem', flexWrap: 'wrap', gap: '0.5rem' }}>
+            <label className="label-formulario" style={{ margin: 0 }}>
+              <span>🍰 Opciones de Tamaño, Porciones o Rellenos disponibles:</span>
             </label>
-            <div style={{ display: 'flex', gap: '0.35rem' }}>
+            <div style={{ display: 'flex', gap: '0.35rem', flexWrap: 'wrap' }}>
               <button
                 type="button"
                 onClick={() => addPresetOptions(['Chica (8 - 10 porciones)', 'Mediana (12 - 15 porciones)', 'Grande (20 - 25 porciones)'])}
                 className="btn-sumar-restar"
-                style={{ width: 'auto', padding: '0.2rem 0.6rem', fontSize: '0.75rem', borderRadius: '12px' }}
+                style={{ width: 'auto', padding: '0.25rem 0.65rem', fontSize: '0.75rem', borderRadius: '12px' }}
                 title="Cargar tamaños estándar"
               >
                 + Tamaños estándar
@@ -344,7 +345,7 @@ export default function AdminProductForm({ editingProduct, onSave, onCancelEdit,
                 type="button"
                 onClick={() => addPresetOptions(['Dulce de Leche', 'Crema Oreo', 'Nutella y Avellanas', 'Crema Chantilly'])}
                 className="btn-sumar-restar"
-                style={{ width: 'auto', padding: '0.2rem 0.6rem', fontSize: '0.75rem', borderRadius: '12px' }}
+                style={{ width: 'auto', padding: '0.25rem 0.65rem', fontSize: '0.75rem', borderRadius: '12px' }}
                 title="Cargar rellenos populares"
               >
                 + Rellenos típicos
@@ -364,14 +365,14 @@ export default function AdminProductForm({ editingProduct, onSave, onCancelEdit,
                   handleAddOption(e);
                 }
               }}
-              className="campo-texto"
-              style={{ padding: '0.5rem 0.85rem' }}
+              className="input-formulario"
+              style={{ padding: '0.55rem 0.85rem' }}
             />
             <button
               type="button"
               onClick={handleAddOption}
-              className="boton-confirmar"
-              style={{ width: 'auto', marginTop: 0, padding: '0.5rem 1.25rem', whiteSpace: 'nowrap' }}
+              className="boton-pedido"
+              style={{ padding: '0.55rem 1.1rem', fontSize: '0.85rem', minHeight: 'auto' }}
             >
               + Agregar
             </button>
@@ -415,58 +416,44 @@ export default function AdminProductForm({ editingProduct, onSave, onCancelEdit,
           )}
         </div>
 
-        {/* SECCIÓN 5: DISPONIBILIDAD */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+        {/* SECCIÓN 5: DISPONIBILIDAD ESTILIZADA */}
+        <label className="admin-checkbox-card" htmlFor="disponibleCheck">
           <input
             type="checkbox"
             id="disponibleCheck"
             checked={disponible}
             onChange={(e) => setDisponible(e.target.checked)}
-            style={{ width: '18px', height: '18px', cursor: 'pointer', accentColor: 'var(--rosa-principal)' }}
+            className="admin-checkbox-input"
           />
-          <label htmlFor="disponibleCheck" style={{ fontSize: '0.9rem', cursor: 'pointer', fontWeight: '600' }}>
-            Producto disponible para pedidos inmediatos en la tienda
-          </label>
-        </div>
+          <span className="admin-checkbox-label">
+            Producto activo y disponible para pedidos inmediatos en la tienda
+          </span>
+        </label>
 
         {/* BOTONES DE ACCIÓN */}
-        <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+        <div className="admin-form-acciones">
+          {editingProduct && (
+            <button
+              type="button"
+              onClick={onCancelEdit}
+              className="boton-admin-link"
+              style={{ padding: '0.65rem 1.25rem' }}
+            >
+              Cancelar
+            </button>
+          )}
           <button
             type="submit"
             disabled={isSubmitting}
-            className="boton-confirmar"
-            style={{
-              width: 'auto',
-              padding: '0.85rem 2rem',
-              backgroundColor: editingProduct ? '#2563eb' : 'var(--rosa-principal)',
-              opacity: isSubmitting ? 0.7 : 1,
-              cursor: isSubmitting ? 'not-allowed' : 'pointer'
-            }}
+            className="admin-btn-ingresar"
+            style={{ width: 'auto', padding: '0.65rem 1.75rem', minHeight: '44px' }}
           >
             {isSubmitting
               ? '⏳ Guardando en MongoDB...'
               : editingProduct
               ? '💾 Actualizar Producto'
-              : '➕ Guardar Producto en MongoDB'}
+              : '➕ Guardar en Catálogo'}
           </button>
-
-          {editingProduct && (
-            <button
-              type="button"
-              onClick={onCancelEdit}
-              style={{
-                background: 'transparent',
-                border: '1px solid var(--rosa-borde)',
-                padding: '0.85rem 1.5rem',
-                borderRadius: '14px',
-                fontWeight: '600',
-                cursor: 'pointer',
-                color: 'var(--texto-oscuro)'
-              }}
-            >
-              Cancelar
-            </button>
-          )}
         </div>
 
       </form>

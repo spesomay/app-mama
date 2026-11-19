@@ -216,20 +216,16 @@ export default function AdminGalleryManager() {
       )}
 
       {/* FORMULARIO DE SUBIDA / EDICIÓN */}
-      <div
-        style={{
-          backgroundColor: 'var(--blanco-card)',
-          border: '1px solid var(--rosa-borde)',
-          borderRadius: '16px',
-          padding: '1.5rem',
-          marginBottom: '2rem',
-          boxShadow: '0 4px 15px rgba(0, 0, 0, 0.04)'
-        }}
-      >
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem', flexWrap: 'wrap', gap: '0.5rem' }}>
-          <h3 style={{ fontFamily: 'Georgia, serif', color: 'var(--texto-oscuro)', fontSize: '1.25rem' }}>
-            {editingItem ? `✏️ Editando Foto: ${editingItem.titulo}` : '📸 Subir Nueva Foto a la Galería'}
-          </h3>
+      <div className={`admin-card-formulario ${editingItem ? 'editando' : ''}`}>
+        <div className="admin-card-header">
+          <div>
+            <h3 className="admin-card-titulo">
+              {editingItem ? `✏️ Editando Foto: ${editingItem.titulo}` : '📸 Subir Nueva Foto a la Galería'}
+            </h3>
+            <p className="admin-card-subtitulo">
+              Mostrá tus creaciones en la galería pública filtrada por categorías con precio sugerido.
+            </p>
+          </div>
           {editingItem && (
             <button
               type="button"
@@ -242,11 +238,13 @@ export default function AdminGalleryManager() {
           )}
         </div>
 
-        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1.1rem' }}>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1rem' }}>
+        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+          <div className="admin-form-grid">
             {/* Título */}
             <div className="campo-formulario">
-              <label className="label-formulario">Título del Trabajo / Torta *</label>
+              <label className="label-formulario">
+                <span>Título del Trabajo / Torta <span className="requerido">*</span></span>
+              </label>
               <input
                 type="text"
                 value={titulo}
@@ -259,7 +257,9 @@ export default function AdminGalleryManager() {
 
             {/* Categoría */}
             <div className="campo-formulario">
-              <label className="label-formulario">Categoría *</label>
+              <label className="label-formulario">
+                <span>Categoría <span className="requerido">*</span></span>
+              </label>
               <select
                 value={categoria}
                 onChange={(e) => setCategoria(e.target.value)}
@@ -272,8 +272,11 @@ export default function AdminGalleryManager() {
             </div>
 
             {/* Precio de Referencia */}
-            <div className="campo-formulario">
-              <label className="label-formulario">Precio de Referencia ($ ARS)</label>
+            <div className="campo-formulario campo-span-full">
+              <label className="label-formulario">
+                <span>Precio de Referencia ($ ARS)</span>
+                <span className="label-hint">Opcional para que los clientes tengan una idea</span>
+              </label>
               <input
                 type="number"
                 value={precio}
@@ -283,119 +286,122 @@ export default function AdminGalleryManager() {
                 min="0"
               />
             </div>
-          </div>
 
-          {/* Descripción */}
-          <div className="campo-formulario">
-            <label className="label-formulario">Descripción del Trabajo (Opcional)</label>
-            <textarea
-              value={descripcion}
-              onChange={(e) => setDescripcion(e.target.value)}
-              placeholder="Detalles del bizcochuelo, rellenos, ocasión o temáticas..."
-              className="input-formulario"
-              rows="2"
-              style={{ resize: 'vertical' }}
-            />
-          </div>
-
-          {/* Selector de Imagen */}
-          <div className="campo-formulario">
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.4rem' }}>
-              <label className="label-formulario" style={{ marginBottom: 0 }}>Foto del Trabajo *</label>
-              <div style={{ display: 'flex', gap: '0.4rem' }}>
-                <button
-                  type="button"
-                  onClick={() => setImageMode('file')}
-                  style={{
-                    border: 'none',
-                    background: imageMode === 'file' ? 'var(--rosa-suave)' : 'transparent',
-                    color: imageMode === 'file' ? 'var(--rosa-principal)' : 'var(--texto-gris)',
-                    padding: '2px 8px',
-                    borderRadius: '8px',
-                    fontSize: '0.75rem',
-                    fontWeight: 600,
-                    cursor: 'pointer'
-                  }}
-                >
-                  📁 Subir Archivo
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setImageMode('url')}
-                  style={{
-                    border: 'none',
-                    background: imageMode === 'url' ? 'var(--rosa-suave)' : 'transparent',
-                    color: imageMode === 'url' ? 'var(--rosa-principal)' : 'var(--texto-gris)',
-                    padding: '2px 8px',
-                    borderRadius: '8px',
-                    fontSize: '0.75rem',
-                    fontWeight: 600,
-                    cursor: 'pointer'
-                  }}
-                >
-                  🔗 URL Web
-                </button>
-              </div>
+            {/* Descripción */}
+            <div className="campo-formulario campo-span-full">
+              <label className="label-formulario">
+                <span>Descripción del Trabajo</span>
+                <span className="label-hint">Opcional (bizcochuelo, rellenos, temáticas)</span>
+              </label>
+              <textarea
+                value={descripcion}
+                onChange={(e) => setDescripcion(e.target.value)}
+                placeholder="Detalles del bizcochuelo, rellenos, ocasión o temática elegida..."
+                className="input-formulario"
+                rows="2"
+              />
             </div>
 
-            {imageMode === 'file' ? (
-              <div>
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept="image/*"
-                  onChange={handleFileChange}
-                  className="input-formulario"
-                  style={{ padding: '0.5rem' }}
-                />
-                {filePreview && (
-                  <div style={{ marginTop: '0.75rem', display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                    <img
-                      src={filePreview}
-                      alt="Previsualización"
-                      style={{ width: '80px', height: '80px', objectFit: 'cover', borderRadius: '10px', border: '1px solid var(--rosa-borde)' }}
-                    />
+            {/* Selector de Imagen Estilizado */}
+            <div className="campo-formulario campo-span-full">
+              <div className="admin-media-box">
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.5rem' }}>
+                  <label className="label-formulario" style={{ margin: 0 }}>
+                    <span>Foto del Trabajo <span className="requerido">*</span></span>
+                    <span className="label-hint">Se mostrará en la galería de clientes</span>
+                  </label>
+                  <div className="admin-modo-selector">
                     <button
                       type="button"
-                      onClick={handleClearImage}
-                      style={{ color: '#b91c1c', background: 'none', border: 'none', fontSize: '0.85rem', cursor: 'pointer', textDecoration: 'underline' }}
+                      onClick={() => setImageMode('file')}
+                      className={`admin-modo-btn ${imageMode === 'file' ? 'activo' : ''}`}
                     >
-                      Quitar foto
+                      📁 Subir Archivo
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setImageMode('url')}
+                      className={`admin-modo-btn ${imageMode === 'url' ? 'activo' : ''}`}
+                    >
+                      🔗 Enlace Web
                     </button>
                   </div>
-                )}
-              </div>
-            ) : (
-              <div>
-                <input
-                  type="url"
-                  value={imageUrl}
-                  onChange={(e) => setImageUrl(e.target.value)}
-                  placeholder="https://ejemplo.com/foto-torta.jpg"
-                  className="input-formulario"
-                />
-                {imageUrl && (
-                  <div style={{ marginTop: '0.75rem' }}>
-                    <img
-                      src={imageUrl}
-                      alt="Previsualización URL"
-                      style={{ width: '80px', height: '80px', objectFit: 'cover', borderRadius: '10px', border: '1px solid var(--rosa-borde)' }}
-                      onError={(e) => { e.currentTarget.style.display = 'none'; }}
+                </div>
+
+                {imageMode === 'file' ? (
+                  <div>
+                    {!filePreview ? (
+                      <div
+                        className="admin-file-picker-custom"
+                        onClick={() => fileInputRef.current?.click()}
+                      >
+                        <span className="admin-file-picker-icon">📸</span>
+                        <span className="admin-file-picker-text">Tocá aquí para elegir una foto de la galería</span>
+                        <span className="admin-file-picker-hint">PNG, JPG o WebP desde tu celular o computadora</span>
+                        <input
+                          ref={fileInputRef}
+                          type="file"
+                          accept="image/*"
+                          onChange={handleFileChange}
+                          className="admin-file-input-hidden"
+                        />
+                      </div>
+                    ) : (
+                      <div className="admin-preview-tarjeta">
+                        <img
+                          src={filePreview}
+                          alt="Previsualización"
+                          className="admin-preview-thumb"
+                        />
+                        <div className="admin-preview-info">
+                          <span className="admin-preview-nombre">{selectedFile?.name || 'Foto de galería'}</span>
+                          <span className="admin-preview-sub">
+                            {selectedFile ? `${(selectedFile.size / 1024).toFixed(1)} KB` : 'Listo para guardar'}
+                          </span>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={handleClearImage}
+                          className="admin-preview-btn-quitar"
+                        >
+                          ✕ Quitar
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <div>
+                    <input
+                      type="url"
+                      value={imageUrl}
+                      onChange={(e) => setImageUrl(e.target.value)}
+                      placeholder="https://ejemplo.com/foto-torta.jpg"
+                      className="input-formulario"
                     />
+                    {imageUrl && (
+                      <div style={{ marginTop: '0.75rem' }}>
+                        <img
+                          src={imageUrl}
+                          alt="Previsualización URL"
+                          style={{ width: '80px', height: '80px', objectFit: 'cover', borderRadius: '10px', border: '1px solid var(--rosa-borde)' }}
+                          onError={(e) => { e.currentTarget.style.display = 'none'; }}
+                        />
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
-            )}
+            </div>
           </div>
 
-          {/* Botón de Enviar */}
-          <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'flex-end', marginTop: '0.5rem' }}>
+          {/* Botones de acción */}
+          <div className="admin-form-acciones">
             {editingItem && (
               <button
                 type="button"
                 onClick={resetForm}
                 className="boton-admin-link"
-                style={{ padding: '0.6rem 1.25rem' }}
+                style={{ padding: '0.65rem 1.25rem' }}
               >
                 Cancelar
               </button>
@@ -404,9 +410,9 @@ export default function AdminGalleryManager() {
               type="submit"
               disabled={isSubmitting}
               className="admin-btn-ingresar"
-              style={{ width: 'auto', padding: '0.6rem 1.75rem', minHeight: '44px' }}
+              style={{ width: 'auto', padding: '0.65rem 1.75rem', minHeight: '44px' }}
             >
-              {isSubmitting ? 'Guardando en MongoDB...' : (editingItem ? '💾 Guardar Cambios' : '📸 Publicar en Galería')}
+              {isSubmitting ? 'Guardando...' : (editingItem ? '💾 Guardar Cambios' : '📸 Publicar en Galería')}
             </button>
           </div>
         </form>
